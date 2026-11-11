@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boas-vindas ao Batalhão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- CAPA -->
+<header class="cover">
+  <div class="bg" style="background-image:url(https://picsum.photos/seed/batalhao1/1920/1080)"></div>
+  <div class="head"><h1>Bem-vindo ao Batalhão</h1><p>Guia de boas-vindas · Turma 2026</p></div>
+  <div class="hint"></div>
+</header>
+
+<!-- INTRO -->
+<section class="section pad shadow-b">
+  <div class="col">
+    <h2 class="rv">Seja bem-vindo</h2>
+    <div class="fig rv"><img src="https://picsum.photos/seed/batalhao2/1600/900" alt=""><div class="cap">Legenda da foto de apresentação.</div></div>
+    <p class="rv"><strong>Uma nova missão começa agora — </strong>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, ut enim ad minim veniam.</p>
+    <blockquote class="rv">Você sabia? Frase de destaque sobre a história do batalhão.</blockquote>
+  </div>
+</section>
+
+<!-- CARTÃO SOBRE FOTO FIXA -->
+<section class="card-sec">
+  <div class="fixbg" style="background-image:url(https://picsum.photos/seed/batalhao3/1920/1080)"></div>
+  <div class="card rv"><h3>NOSSA HISTÓRIA</h3><p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p></div>
+</section>
+
+<!-- FOTOS LARGURA TOTAL (parallax) -->
+<section class="full"><div class="im" data-par="0.15" style="background-image:url(https://picsum.photos/seed/batalhao4/1920/1080)"></div><div class="cap">Quartel – vista geral</div></section>
+<div style="height:80px"></div>
+<section class="full"><div class="im" data-par="0.15" style="background-image:url(https://picsum.photos/seed/batalhao5/1920/1080)"></div><div class="cap">Instrução no pátio</div></section>
+<div style="height:80px"></div>
+
+<!-- JANELA COM FRASE -->
+<section class="window"><div class="fixbg" style="background-image:url(https://picsum.photos/seed/batalhao6/1920/1080)"></div><div class="pq rv">Destaques</div></section>
+
+<!-- TÍTULO + DIVIDIDO -->
+<section class="section pad" style="padding-bottom:20px"><div class="col"><h2 class="rv">Apresentação do Comandante</h2></div></section>
+<section class="split">
+  <div class="txt"><h3 class="rv">Mensagem de boas-vindas</h3><p class="rv">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p><p class="rv">Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p></div>
+  <div class="ph"><div class="im" data-par="0.1" style="position:absolute;left:0;right:0;top:-10%;height:120%;background-size:cover;background-position:center;background-image:url(https://picsum.photos/seed/batalhao7/1000/1200)"></div></div>
+</section>
+
+<!-- GRADE DE FOTOS -->
+<section class="section pad"><div class="col"><h2 class="rv">Conheça as instalações</h2></div>
+  <div class="grid rv">
+    <div class="g" style="background-image:url(https://picsum.photos/seed/b8/800/600)"></div>
+    <div class="g" style="background-image:url(https://picsum.photos/seed/b9/800/600)"></div>
+    <div class="g" style="background-image:url(https://picsum.photos/seed/b10/800/600)"></div>
+    <div class="g" style="background-image:url(https://picsum.photos/seed/b11/800/600)"></div>
+    <div class="g" style="background-image:url(https://picsum.photos/seed/b12/800/600)"></div>
+    <div class="g" style="background-image:url(https://picsum.photos/seed/b13/800/600)"></div>
+  </div>
+</section>
+
+<!-- FOTO TELA CHEIA -->
+<section class="full" style="height:100vh"><div class="im" data-par="0.2" style="background-image:url(https://picsum.photos/seed/batalhao14/1920/1200)"></div><div class="cap">Formatura</div></section>
+
+<!-- COMANDANTE -->
+<section class="author"><div class="col"><div class="av rv" style="background-image:url(https://picsum.photos/seed/cmt/400/400)"></div><h3 class="rv">Nome do Comandante</h3><p class="rv">Comandante do Batalhão</p></div></section>
+
+<!-- ATUALIZAÇÕES -->
+<section class="upd" id="atualizacoes">
+  <div class="col">
+    <h2 class="rv">Atualizações</h2>
+    <ul class="list" id="lista"><li><span>Carregando…</span></li></ul>
+    <div class="form" id="admin">
+      <p class="lock" id="lock">Área do administrador — o PIN também libera a edição de textos, imagens e cores da página</p>
+      <div id="pinBox"><input type="password" id="pin" placeholder="PIN do administrador"><button class="btn" id="entrar">Entrar</button></div>
+      <div id="envio" hidden>
+        <input type="text" id="titulo" placeholder="Título da atualização">
+        <input type="file" id="arquivo">
+        <br><button class="btn" id="enviar">Enviar atualização</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+</section>
+
+<footer class="bumper">Nome do Batalhão · Boas-vindas</footer>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>
