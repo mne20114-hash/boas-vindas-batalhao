@@ -131,6 +131,16 @@ body.edit [contenteditable]{outline:1px dashed rgba(196,164,104,.9);outline-offs
 body.edit [contenteditable]:focus{outline:2px solid var(--gold);background:rgba(196,164,104,.12)}
 body.edit [data-img]{cursor:pointer}
 body.edit [data-img]:hover{outline:3px dashed var(--gold);outline-offset:-3px}
+
+/* ajuste de zoom/posição da foto */
+#imgModal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px}
+#imgModal .box{background-repeat:no-repeat;cursor:grab;box-shadow:0 0 0 2px rgba(255,255,255,.4);touch-action:none}
+#imgModal .box.dragging{cursor:grabbing}
+#imgModal .ctrl{display:flex;align-items:center;gap:12px;color:#fff;font:600 13px Montserrat,sans-serif;flex-wrap:wrap;justify-content:center}
+#imgModal input[type=range]{width:200px}
+#imgModal button{background:var(--gold);color:#111;border:0;padding:8px 16px;font:700 13px Montserrat,sans-serif;cursor:pointer}
+#imgModal button.sec{background:#444;color:#fff}
+#imgModal .hint{color:#ddd;font:400 12px Montserrat,sans-serif}
 body.edit .rv{opacity:1!important;transform:none!important}
 body.edit .cover .grad{pointer-events:none}
 /* no modo edição os fundos fixos viram fundos comuns, para poder clicar em cada um */

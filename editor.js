@@ -4,7 +4,7 @@ const C=window.CONFIG||{};
 const live=!!(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase);
 const sb=live?supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY):null;
 const LS='site_config_demo_v2';
-let state={texts:{},imgs:{},vars:{}};
+let state={texts:{},imgs:{},vars:{},imgpos:{}};
 
 /* ids estáveis por ordem no documento */
 const textEls=[...document.querySelectorAll('h1,h2,h3,p:not(.lock):not(.msg),blockquote,.cap,.pq,.bumper,.author .label,.author .name')]
@@ -20,8 +20,10 @@ const vars=['--navy','--gold','--cover','--ink'];
 function apply(s){
   Object.entries(s.texts||{}).forEach(([k,v])=>{const e=document.querySelector(`[data-t="${k}"]`);if(e)e.innerHTML=v});
   Object.entries(s.imgs||{}).forEach(([k,v])=>{const e=document.querySelector(`[data-img="${k}"]`);if(e)setImg(e,v)});
+  Object.entries(s.imgpos||{}).forEach(([k,v])=>{const e=document.querySelector(`[data-img="${k}"]`);if(e&&e.tagName!=='IMG')setPos(e,v)});
   Object.entries(s.vars||{}).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
 }
+function setPos(e,v){e.style.backgroundSize=v.s===100?'cover':v.s+'%';e.style.backgroundPosition=v.x+'% '+v.y+'%'}
 async function load(){
   try{
     if(live){const {data}=await sb.from('batalhao_config').select('data').eq('id',2).maybeSingle();if(data)state=Object.assign(state,data.data)}
@@ -72,6 +74,46 @@ const $=id=>document.getElementById(id);
 const st=t=>{$('st').textContent=t};
 function rgb(c){c=c.trim();if(c[0]==='#')return c.length===4?'#'+[...c.slice(1)].map(x=>x+x).join(''):c;return '#000000'}
 
+function openImgModal(el){
+  const key=el.dataset.img;
+  let url=getBg(el);
+  const pos=Object.assign({s:100,x:50,y:50},state.imgpos[key]||{});
+  const r=el.getBoundingClientRect();
+  const ratio=(r.height&&r.width)?r.height/r.width:.6;
+  let bw=Math.min(640,innerWidth*.92),bh=bw*ratio;
+  if(bh>innerHeight*.62){bh=innerHeight*.62;bw=bh/ratio}
+  const m=document.createElement('div');m.id='imgModal';
+  m.innerHTML=`<div class="box" style="width:${bw}px;height:${bh}px;background-image:url('${url}')"></div>
+    <div class="ctrl">
+      <label>Zoom <input type="range" id="zm" min="100" max="400" step="5" value="${pos.s}"></label>
+      <button class="sec" id="trc">Escolher outra imagem</button>
+      <button class="sec" id="cc">Cancelar</button>
+      <button id="ap">Aplicar</button>
+      <span class="st" id="mst"></span>
+    </div>
+    <div class="hint">Arraste a imagem para posicionar</div>`;
+  document.body.appendChild(m);
+  const box=m.querySelector('.box');
+  const refresh=()=>{box.style.backgroundSize=pos.s===100?'cover':pos.s+'%';box.style.backgroundPosition=pos.x+'% '+pos.y+'%'};
+  refresh();
+  $('zm').oninput=e=>{pos.s=+e.target.value;refresh()};
+  let drag=null;
+  box.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,px:pos.x,py:pos.y};box.setPointerCapture(e.pointerId);box.classList.add('dragging')});
+  box.addEventListener('pointermove',e=>{if(!drag)return;const dx=(e.clientX-drag.x)/bw*100,dy=(e.clientY-drag.y)/bh*100;pos.x=Math.max(0,Math.min(100,drag.px-dx));pos.y=Math.max(0,Math.min(100,drag.py-dy));refresh()});
+  const end=()=>{drag=null;box.classList.remove('dragging')};
+  box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end);
+  m.querySelector('#trc').onclick=()=>{
+    const f=document.createElement('input');f.type='file';f.accept='image/*';
+    f.onchange=async()=>{if(!f.files[0])return;$('mst').textContent='Enviando…';try{url=await sendImg(f.files[0]);box.style.backgroundImage=`url('${url}')`;$('mst').textContent=''}catch(err){$('mst').textContent='Erro: '+(err.message||err)}};
+    f.click();
+  };
+  m.querySelector('#cc').onclick=()=>m.remove();
+  m.querySelector('#ap').onclick=()=>{
+    setImg(el,url);state.imgs[key]=url;
+    setPos(el,pos);state.imgpos[key]={s:pos.s,x:pos.x,y:pos.y};
+    m.remove();st('Imagem ajustada — clique em Salvar');
+  };
+}
 window.enableEdit=function(){
   if(document.body.classList.contains('edit'))return;
   document.body.classList.add('edit');
@@ -79,14 +121,16 @@ window.enableEdit=function(){
   textEls.forEach(e=>e.contentEditable='true');
   /* texto: colar sem formatação */
   document.addEventListener('paste',e=>{if(e.target.isContentEditable){e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text'))}});
-  /* imagem: clique para trocar */
+  /* imagem: clique para trocar (foto de fundo abre ajuste de zoom/posição) */
   document.addEventListener('click',e=>{
     if(e.target.isContentEditable)return;
-    const el=e.target.closest('[data-img]');if(!el||e.target.closest('#tb'))return;
+    const el=e.target.closest('[data-img]');if(!el||e.target.closest('#tb,#imgModal'))return;
     e.preventDefault();
-    const f=document.createElement('input');f.type='file';f.accept='image/*';
-    f.onchange=async()=>{if(!f.files[0])return;st('Enviando imagem…');try{const u=await sendImg(f.files[0]);setImg(el,u);state.imgs[el.dataset.img]=u;st('Imagem trocada — clique em Salvar')}catch(err){st('Erro: '+(err.message||err))}};
-    f.click();
+    if(el.tagName==='IMG'){
+      const f=document.createElement('input');f.type='file';f.accept='image/*';
+      f.onchange=async()=>{if(!f.files[0])return;st('Enviando imagem…');try{const u=await sendImg(f.files[0]);setImg(el,u);state.imgs[el.dataset.img]=u;st('Imagem trocada — clique em Salvar')}catch(err){st('Erro: '+(err.message||err))}};
+      f.click();
+    }else openImgModal(el);
   },true);
   /* aplica fonte salva no seletor */
   if(state.vars&&state.vars.font)$('fnt').value=state.vars.font;
