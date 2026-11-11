@@ -154,3 +154,4 @@ body.edit .cover .head{transform:none!important;opacity:1!important}
   .av{width:33.75px;height:33.75px}.author .info{margin-left:38.7px;padding-top:0}.author .col{min-height:36px}.author .label{font-size:9px}.author .name{font-size:17px}
 }
 @media(prefers-reduced-motion:reduce){.rv{opacity:1!important;transform:none!important;transition:none}}
+.map iframe{display:block;width:100%;height:60vh;min-height:320px;border:0}
