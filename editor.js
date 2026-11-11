@@ -9,9 +9,10 @@ let state={texts:{},imgs:{},vars:{},imgpos:{}};
 /* ids estáveis por ordem no documento */
 const textEls=[...document.querySelectorAll('h1,h2,h3,p:not(.lock):not(.msg),blockquote,.cap,.pq,.bumper,.cmd .name')]
   .filter((e,i,a)=>a.indexOf(e)===i && !e.closest('#admin,#tb,#lista'));
-textEls.forEach((e,i)=>e.dataset.t='t'+i);
+/* a chave vem do atributo data-t/data-img escrito no HTML; só gera uma nova se faltar */
+textEls.forEach((e,i)=>{if(!e.dataset.t)e.dataset.t='t'+i});
 const imgEls=[...document.querySelectorAll('.bg,.g,.av,.fig img')].filter(e=>!e.closest('#tb'));
-imgEls.forEach((e,i)=>e.dataset.img='i'+i);
+imgEls.forEach((e,i)=>{if(!e.dataset.img)e.dataset.img='i'+i});
 
 const getBg=e=>e.tagName==='IMG'?e.src:(e.style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)||[])[1];
 const setImg=(e,u)=>{e.tagName==='IMG'?e.src=u:e.style.backgroundImage=`url("${u}")`};
