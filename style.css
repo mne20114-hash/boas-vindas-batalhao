@@ -37,6 +37,10 @@ blockquote:before{content:"";position:absolute;top:0;bottom:0;left:0;width:5px;b
 .fig{text-align:center}
 .fig img{display:inline-block;max-height:92vh;width:auto;cursor:zoom-in}
 .cap{font-size:15px;font-weight:400;line-height:1.6;text-align:center;margin:.5em 0}
+.fig-row{display:flex;gap:2.5rem;align-items:flex-start}
+.fig-row>.fig{flex:1;min-width:0}
+.fig-row>.fig img{width:100%;height:auto;max-height:none}
+@media(max-width:767px){.fig-row{flex-direction:column;gap:1.25rem}}
 
 /* cartão sobre foto fixa */
 .cardsec{background:var(--cover);padding:70vh 0 60vh}
