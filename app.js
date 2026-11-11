@@ -1,57 +1,36 @@
-/* Efeitos de rolagem V2 — reversíveis: animam descendo e subindo */
+/* Efeitos de rolagem no padrão do original: fundos fixos, surgimento suave (ida e volta) */
 (function(){
 const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-/* grade: cada foto anima separada */
-document.querySelectorAll('.grid.rv').forEach(g=>{g.classList.remove('rv');[...g.children].forEach(c=>c.classList.add('rv'))});
-const fx=(sel,v)=>document.querySelectorAll(sel).forEach(e=>e.dataset.fx=v);
-fx('.fig.rv,.av.rv,.grid .g.rv','zoom');
-fx('blockquote.rv,.card.rv,.pq.rv,.split .txt .rv','left');
 const rv=[...document.querySelectorAll('.rv')];
-/* atraso em cascata entre irmãos */
-const cnt=new Map();
-rv.forEach(e=>{const p=e.parentElement,i=cnt.get(p)||0;cnt.set(p,i+1);e.style.setProperty('--d',Math.min(i,6)*90+'ms')});
-const bar=document.createElement('div');bar.id='prog';document.body.appendChild(bar);
-const cover=document.querySelector('.cover'),cbg=cover&&cover.querySelector('.bg'),head=cover&&cover.querySelector('.head'),hint=cover&&cover.querySelector('.hint');
-if(cbg)cbg.addEventListener('animationend',()=>{cbg.style.animation='none';frame()});
-const pars=[...document.querySelectorAll('[data-par]')];
-const pageTop=el=>{let y=0;while(el){y+=el.offsetTop;el=el.offsetParent}return y};
+if('IntersectionObserver' in window&&!reduce){
+  const io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('in',e.isIntersecting)),{rootMargin:'0px 0px -8% 0px',threshold:.01});
+  rv.forEach(e=>io.observe(e));
+}else rv.forEach(e=>e.classList.add('in'));
+const cover=document.querySelector('.cover'),head=cover&&cover.querySelector('.head');
+const card=document.querySelector('.cardsec'),cbg=card&&card.querySelector('.bg');
 let tick=false;
 function frame(){
   tick=false;
-  const y=scrollY,vh=innerHeight,edit=document.body.classList.contains('edit');
-  /* leituras */
-  const st=rv.map(e=>{const t=pageTop(e),h=e.offsetHeight;return t+h<=y+vh*.06?'above':(t<y+vh*.9?'in':'below')});
-  const rects=pars.map(e=>e.parentElement.getBoundingClientRect());
-  const max=document.documentElement.scrollHeight-vh;
-  /* escritas */
-  rv.forEach((e,i)=>{e.classList.toggle('in',st[i]==='in');e.classList.toggle('above',st[i]==='above')});
-  bar.style.transform=`scaleX(${max>0?clamp(y/max,0,1):0})`;
-  if(reduce||edit)return;
-  if(cover&&y<vh*1.3){
-    const p=clamp(y/vh,0,1);
-    cbg.style.transform=`translate3d(0,${y*.35}px,0) scale(${1+p*.12})`;
-    head.style.transform=`translate3d(0,${-y*.3}px,0)`;
-    head.style.opacity=clamp(1-p*1.5,0,1);
-    if(hint)hint.style.opacity=clamp(1-p*4,0,1);
-  }
-  pars.forEach((el,i)=>{
-    const r=rects[i];if(r.bottom<-200||r.top>vh+200)return;
-    const enter=clamp((vh-r.top)/(vh*.85),0,1),leave=clamp(r.bottom/(vh*.5),0,1);
-    const off=(r.top+r.height/2-vh/2)*parseFloat(el.dataset.par);
-    el.style.transform=`translate3d(0,${off}px,0) scale(${1+(1-enter)*.18})`;
-    const par=el.parentElement;
-    if(par.classList.contains('full')){
-      const k=1-enter;
-      par.style.clipPath=`inset(${k*8}% ${k*10}% 0 ${k*10}%)`;
-      par.style.opacity=.35+.65*Math.min(enter,leave*1.5,1);
-    }
-  });
+  if(reduce||document.body.classList.contains('edit'))return;
+  const y=scrollY,vh=innerHeight;
+  if(head&&y<vh*1.2){const p=clamp(y/vh,0,1);head.style.transform=`translate3d(0,${-y*.25}px,0)`;head.style.opacity=clamp(1-p*1.6,0,1)}
+  if(cbg){const r=card.getBoundingClientRect();if(r.bottom>0&&r.top<vh){const p=clamp((vh-r.top)/(r.height+vh),0,1);cbg.style.transform=`scale(${1+p*.2})`}}
 }
 const req=()=>{if(!tick){tick=true;requestAnimationFrame(frame)}};
-addEventListener('scroll',req,{passive:true});
-addEventListener('resize',req);addEventListener('load',req);
-frame();
+addEventListener('scroll',req,{passive:true});addEventListener('resize',req);frame();
+/* ampliar foto ao clicar (fora do modo edição) */
+const lb=document.getElementById('lb');
+if(lb){
+  document.addEventListener('click',e=>{
+    if(document.body.classList.contains('edit'))return;
+    if(!lb.hidden){lb.hidden=true;return}
+    const t=e.target.closest('.fig img,.g');if(!t)return;
+    const us=t.tagName==='IMG'?[t.currentSrc||t.src]:[...getComputedStyle(t).backgroundImage.matchAll(/url\(["']?(.*?)["']?\)/g)].map(m=>m[1]);
+    if(us.length){const im=lb.firstElementChild;im.onerror=()=>{if(us.length>1){us.shift();im.src=us[0]}};im.src=us[0];lb.hidden=false}
+  });
+  addEventListener('keydown',e=>{if(e.key==='Escape')lb.hidden=true});
+}
 })();
 
 /* Atualizações (Supabase, ou modo demonstração) */

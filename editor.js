@@ -3,14 +3,14 @@
 const C=window.CONFIG||{};
 const live=!!(C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&window.supabase);
 const sb=live?supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY):null;
-const LS='site_config_demo';
+const LS='site_config_demo_v2';
 let state={texts:{},imgs:{},vars:{}};
 
 /* ids estáveis por ordem no documento */
-const textEls=[...document.querySelectorAll('h1,h2,h3,p:not(.lock):not(.msg),blockquote,.cap,.pq,.bumper,.head p')]
+const textEls=[...document.querySelectorAll('h1,h2,h3,p:not(.lock):not(.msg),blockquote,.cap,.pq,.bumper,.author .label,.author .name')]
   .filter((e,i,a)=>a.indexOf(e)===i && !e.closest('#admin,#tb,#lista'));
 textEls.forEach((e,i)=>e.dataset.t='t'+i);
-const imgEls=[...document.querySelectorAll('.bg,.im,.fixbg,.g,.av,.fig img')].filter(e=>!e.closest('#tb'));
+const imgEls=[...document.querySelectorAll('.bg,.g,.av,.fig img')].filter(e=>!e.closest('#tb'));
 imgEls.forEach((e,i)=>e.dataset.img='i'+i);
 
 const getBg=e=>e.tagName==='IMG'?e.src:(e.style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)||[])[1];
@@ -24,7 +24,7 @@ function apply(s){
 }
 async function load(){
   try{
-    if(live){const {data}=await sb.from('batalhao_config').select('data').eq('id',1).maybeSingle();if(data)state=Object.assign(state,data.data)}
+    if(live){const {data}=await sb.from('batalhao_config').select('data').eq('id',2).maybeSingle();if(data)state=Object.assign(state,data.data)}
     else state=Object.assign(state,JSON.parse(localStorage.getItem(LS)||'{}'));
   }catch(e){}
   apply(state);
@@ -33,7 +33,7 @@ async function save(){
   /* coleta textos atuais */
   textEls.forEach(e=>{state.texts[e.dataset.t]=e.innerHTML});
   if(live){
-    const r=await sb.from('batalhao_config').upsert({id:1,data:state,updated_at:new Date().toISOString()});
+    const r=await sb.from('batalhao_config').upsert({id:2,data:state,updated_at:new Date().toISOString()});
     if(r.error)throw r.error;
   }else localStorage.setItem(LS,JSON.stringify(state));
 }
@@ -65,7 +65,7 @@ function toolbar(){
   tb.querySelectorAll('[data-v]').forEach(i=>i.oninput=()=>{document.documentElement.style.setProperty(i.dataset.v,i.value);state.vars[i.dataset.v]=i.value});
   $('fnt').onchange=e=>{document.body.style.fontFamily=e.target.value+',sans-serif';state.vars.font=e.target.value;document.querySelectorAll('h1,h2,h3,p,blockquote,.pq').forEach(x=>x.style.fontFamily=e.target.value+',sans-serif')};
   $('sv').onclick=async()=>{st('Salvando…');try{await save();st('Salvo ✔')}catch(e){st('Erro: '+(e.message||e))}};
-  $('rs').onclick=()=>{if(confirm('Voltar ao padrão original?')){if(live)sb.from('batalhao_config').delete().eq('id',1).then(()=>location.reload());else{localStorage.removeItem(LS);location.reload()}}};
+  $('rs').onclick=()=>{if(confirm('Voltar ao padrão original?')){if(live)sb.from('batalhao_config').delete().eq('id',2).then(()=>location.reload());else{localStorage.removeItem(LS);location.reload()}}};
   $('sair').onclick=()=>location.reload();
 }
 const $=id=>document.getElementById(id);
