@@ -7,7 +7,7 @@ const LS='site_config_demo_v2';
 let state={texts:{},imgs:{},vars:{},imgpos:{}};
 
 /* ids estáveis por ordem no documento */
-const textEls=[...document.querySelectorAll('h1,h2,h3,p:not(.lock):not(.msg),blockquote,.cap,.pq,.bumper,.author .label,.author .name')]
+const textEls=[...document.querySelectorAll('h1,h2,h3,p:not(.lock):not(.msg),blockquote,.cap,.pq,.bumper,.cmd .name')]
   .filter((e,i,a)=>a.indexOf(e)===i && !e.closest('#admin,#tb,#lista'));
 textEls.forEach((e,i)=>e.dataset.t='t'+i);
 const imgEls=[...document.querySelectorAll('.bg,.g,.av,.fig img')].filter(e=>!e.closest('#tb'));
