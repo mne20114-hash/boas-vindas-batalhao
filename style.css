@@ -132,6 +132,11 @@ body.edit [contenteditable]:focus{outline:2px solid var(--gold);background:rgba(
 body.edit [data-img]{cursor:pointer}
 body.edit [data-img]:hover{outline:3px dashed var(--gold);outline-offset:-3px}
 
+/* barra de formatação ao selecionar texto */
+#selTb{position:absolute;z-index:1001;display:none;gap:2px;background:#111;padding:4px;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+#selTb button{background:#333;color:#fff;border:0;min-width:28px;padding:5px 10px;font:600 13px Montserrat,sans-serif;cursor:pointer}
+#selTb button:hover{background:var(--gold);color:#111}
+
 /* ajuste de zoom/posição da foto */
 #imgModal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px}
 #imgModal .box{background-repeat:no-repeat;cursor:grab;box-shadow:0 0 0 2px rgba(255,255,255,.4);touch-action:none}

@@ -74,6 +74,32 @@ const $=id=>document.getElementById(id);
 const st=t=>{$('st').textContent=t};
 function rgb(c){c=c.trim();if(c[0]==='#')return c.length===4?'#'+[...c.slice(1)].map(x=>x+x).join(''):c;return '#000000'}
 
+function selToolbar(){
+  const tb=document.createElement('div');tb.id='selTb';
+  tb.innerHTML='<button data-c="bold"><b>N</b></button><button data-c="italic"><i>I</i></button><button data-c="normal">Normal</button>';
+  document.body.appendChild(tb);
+  tb.querySelectorAll('button').forEach(b=>{
+    b.onmousedown=e=>e.preventDefault(); /* não perde a seleção */
+    b.onclick=()=>{
+      const c=b.dataset.c;
+      if(c==='normal'){document.execCommand('removeFormat')}
+      else document.execCommand(c);
+    };
+  });
+  const hide=()=>tb.style.display='none';
+  document.addEventListener('selectionchange',()=>{
+    const s=document.getSelection();
+    if(!s||s.isCollapsed||!s.anchorNode){hide();return}
+    const el=s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentElement;
+    if(!el||!el.closest('[contenteditable="true"]')){hide();return}
+    const r=s.getRangeAt(0).getBoundingClientRect();
+    if(!r.width&&!r.height){hide();return}
+    tb.style.display='flex';
+    tb.style.left=Math.max(4,r.left+r.width/2-tb.offsetWidth/2)+'px';
+    tb.style.top=Math.max(4,r.top-tb.offsetHeight-6+scrollY)+'px';
+  });
+  document.addEventListener('scroll',hide,true);
+}
 function openImgModal(el){
   const key=el.dataset.img;
   let url=getBg(el);
@@ -121,6 +147,7 @@ window.enableEdit=function(){
   textEls.forEach(e=>e.contentEditable='true');
   /* texto: colar sem formatação */
   document.addEventListener('paste',e=>{if(e.target.isContentEditable){e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text'))}});
+  selToolbar();
   /* imagem: clique para trocar (foto de fundo abre ajuste de zoom/posição) */
   document.addEventListener('click',e=>{
     if(e.target.isContentEditable)return;
