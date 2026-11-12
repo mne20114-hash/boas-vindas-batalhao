@@ -176,3 +176,5 @@ body.edit .cover .head{transform:none!important;opacity:1!important}
 }
 @media(prefers-reduced-motion:reduce){.rv{opacity:1!important;transform:none!important;transition:none}}
 .map iframe{display:block;width:100%;height:60vh;min-height:320px;border:0}
+.reel iframe{display:block;width:100%;max-width:400px;height:640px;margin:0 auto;border:0;background:#fff}
+@media(max-width:767px){.reel iframe{height:560px}}
