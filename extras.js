@@ -234,8 +234,7 @@
   /* PNG com fundo transparente: o editor base converte tudo para JPEG; aqui mantemos PNG quando o arquivo escolhido tem transparência possível */
   (function () {
     var tipo = '';
-    D.addEventListener('change', function (e) { var f = e.target && e.target.files && e.target.files[0]; if (f) tipo = f.type || ''; }, true);
-    D.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) tipo = f.type || ''; }, true);
+    var cou = URL.createObjectURL; URL.createObjectURL = function (f) { if (f && typeof f.type === 'string' && f.type.indexOf('image/') === 0) tipo = f.type; return cou.apply(URL, arguments); };
     var orig = HTMLCanvasElement.prototype.toBlob;
     HTMLCanvasElement.prototype.toBlob = function (cb, t, q) {
       if (t === 'image/jpeg' && /png|webp|gif/.test(tipo)) return orig.call(this, cb, 'image/png');
