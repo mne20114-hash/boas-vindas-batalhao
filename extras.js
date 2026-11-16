@@ -204,7 +204,7 @@
     var st = D.getElementById('xcar'); if (!st) { st = mk('style', { id: 'xcar' }); D.head.appendChild(st); }
     var a = '.xcar{position:relative;overflow:hidden}.xcar-t{position:absolute;inset:0;display:flex;height:100%}.xcar-t>div{flex:0 0 auto;height:100%;aspect-ratio:auto!important;background-color:#0c223a;background-size:cover;background-position:center;background-repeat:no-repeat}' +
       '.xcar-fade{-webkit-mask-image:linear-gradient(to bottom,#000 62%,transparent 100%);mask-image:linear-gradient(to bottom,#000 62%,transparent 100%)}' +
-      'body.edit .xcar-t{animation:none!important;transform:none!important;width:100%!important}body.edit .xcar-t>div{width:auto!important;flex:1 1 0!important;outline:1px dashed #fff;outline-offset:-1px}body.edit .xcar-t>.dup{display:none}';
+      'body.edit .xcar-t{animation:none!important}.xcar-nav{display:none}body.edit .xcar-nav{display:flex;gap:4px;position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:3}.xcar-nav button{width:28px;height:28px;border-radius:50%;border:1px solid #fff;background:rgba(0,0,0,.6);color:#fff;font:600 13px Montserrat,sans-serif;cursor:pointer;padding:0}.xcar-nav button.on{background:#c4a468;color:#0c223a}';
     Object.keys(cfg.car).forEach(function (k, ix) {
       var c = cfg.car[k], n = c.n || 4, seg = c.s || 3, el = byK(k); if (!el) return;
       var nm = 'xcar' + ix, kf = '@keyframes ' + nm + '{', i, p = 100 / n, mv = Math.min(p * .2, 100 * .7 / (n * seg));
@@ -217,6 +217,16 @@
       for (i = 1; i <= n; i++) t.appendChild(mk('div', { 'data-img': k + '-c' + i, 'data-xi': '1' }));
       var d = mk('div', { 'class': 'dup', 'data-xi': '1', 'data-xdup': k + '-c1' }); t.appendChild(d);
       el.appendChild(t);
+      var nav = mk('div', { 'class': 'xcar-nav', contenteditable: 'false' });
+      for (i = 0; i < n; i++) nav.appendChild(mk('button', { type: 'button', 'data-i': i, title: 'Mostrar foto ' + (i + 1) }, String(i + 1)));
+      nav.firstChild.className = 'on';
+      nav.addEventListener('click', function (e) {
+        e.stopPropagation(); e.preventDefault(); var b = e.target.closest('button'); if (!b) return;
+        t.style.transform = 'translateX(-' + (b.dataset.i * 100 / (n + 1)) + '%)';
+        $$('button', nav).forEach(function (x) { x.className = x === b ? 'on' : ''; });
+      });
+      ['mousedown', 'mouseup'].forEach(function (ev) { nav.addEventListener(ev, function (e) { e.stopPropagation(); }); });
+      el.appendChild(nav);
     });
     st.textContent = a;
   }
