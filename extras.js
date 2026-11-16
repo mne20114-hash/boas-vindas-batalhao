@@ -242,6 +242,26 @@
     };
   })();
 
+  /* trava de versão: se a página foi alterada no banco depois que esta aba carregou, salvar daqui apagaria essas alterações */
+  (function () {
+    var livre = false;
+    D.addEventListener('click', function (e) {
+      var sv = e.target.closest && e.target.closest('#sv'); if (!sv) return;
+      if (livre) { livre = false; return; }
+      if (!salvo) return;
+      e.stopImmediatePropagation(); e.preventDefault();
+      api('?id=eq.2&select=rev:data->>rev').then(function (r) { return r.json(); }).then(function (j) {
+        var atual = String((j[0] || {}).rev || ''), meu = String(salvo.rev || '');
+        if (atual === meu) { livre = true; sv.click(); return; }
+        var w = D.getElementById('xrev'); if (!w) { w = mk('div', { id: 'xrev', style: 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:20px' }); D.body.appendChild(w); }
+        w.innerHTML = '<div style="background:#fff;color:#0c223a;max-width:420px;padding:22px;border-radius:8px;font:15px/1.5 Montserrat,sans-serif"><b>Esta aba está desatualizada.</b><br>A página recebeu uma atualização depois que você abriu esta aba. Para não apagar essa atualização, o salvamento foi bloqueado. Recarregue a página e refaça a alteração que estava fazendo.<div style="margin-top:14px;display:flex;gap:8px"><button id=xrev1 style="padding:8px 14px;background:#c4a468;border:0;font-weight:600;cursor:pointer">Recarregar agora</button><button id=xrev2 style="padding:8px 14px;background:#eee;border:0;cursor:pointer">Fechar</button></div></div>';
+        w.style.display = 'flex';
+        D.getElementById('xrev1').onclick = function () { dirty = false; location.reload(); };
+        D.getElementById('xrev2').onclick = function () { w.style.display = 'none'; };
+      }).catch(function () { livre = true; sv.click(); });
+    }, true);
+  })();
+
   function aplicar() {
     var resta = cfg.add.slice(), v = 0;
     while (resta.length && v++ < 30) resta = resta.filter(function (n) { return !criar(n); });
