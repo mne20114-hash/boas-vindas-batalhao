@@ -8,7 +8,7 @@ let state={texts:{},imgs:{},vars:{},imgpos:{}};
 
 /* ids estáveis por ordem no documento */
 const textEls=[...document.querySelectorAll('h1,h2,h3,p:not(.lock):not(.msg),blockquote,.cap,.pq,.bumper,.cmd .name')]
-  .filter((e,i,a)=>a.indexOf(e)===i && !e.closest('#admin,#tb,#lista'));
+  .filter((e,i,a)=>a.indexOf(e)===i && !e.closest('#admin,#tb,#lista') && !e.dataset.x && !e.closest('[data-xk]'));
 /* a chave vem do atributo data-t/data-img escrito no HTML; só gera uma nova se faltar */
 textEls.forEach((e,i)=>{if(!e.dataset.t)e.dataset.t='t'+i});
 const imgEls=[...document.querySelectorAll('.bg,.g,.av,.fig img')].filter(e=>!e.closest('#tb'));
@@ -19,18 +19,24 @@ const setImg=(e,u)=>{e.tagName==='IMG'?e.src=u:e.style.backgroundImage=`url("${u
 const vars=['--navy','--gold','--cover','--ink'];
 
 function apply(s){
-  Object.entries(s.texts||{}).forEach(([k,v])=>{const e=document.querySelector(`[data-t="${k}"]`);if(e)e.innerHTML=v});
+  Object.entries(s.texts||{}).forEach(([k,v])=>{const e=document.querySelector(`[data-t="${k}"]`);if(e&&e.__v!==v){e.innerHTML=v;e.__v=v}});
   Object.entries(s.imgs||{}).forEach(([k,v])=>{const e=document.querySelector(`[data-img="${k}"]`);if(e)setImg(e,v)});
   Object.entries(s.imgpos||{}).forEach(([k,v])=>{const e=document.querySelector(`[data-img="${k}"]`);if(e&&e.tagName!=='IMG')setPos(e,v)});
   Object.entries(s.vars||{}).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
 }
 function setPos(e,v){e.style.backgroundSize=v.s===100?'cover':v.s+'%';e.style.backgroundPosition=v.x+'% '+v.y+'%'}
 async function load(){
+  /* conteúdo embutido na página no momento da publicação: aparece na hora, sem esperar o banco */
+  const baked=window.__CFG?JSON.stringify(window.__CFG):null;
+  if(baked){state=Object.assign(state,JSON.parse(baked));apply(state)}
+  let fresh=null;
   try{
-    if(live){const {data}=await sb.from('batalhao_config').select('data').eq('id',2).maybeSingle();if(data)state=Object.assign(state,data.data)}
+    if(live){const {data}=await sb.from('batalhao_config').select('data').eq('id',2).maybeSingle();if(data){fresh=data.data;state=Object.assign(state,fresh)}}
     else state=Object.assign(state,JSON.parse(localStorage.getItem(LS)||'{}'));
   }catch(e){}
   apply(state);
+  /* se o banco mudou depois da publicação, atualiza também os blocos do editor avançado */
+  if(fresh&&baked&&JSON.stringify(fresh)!==baked){window.__cfgRow=[{data:fresh}];if(window.__xre)try{window.__xre()}catch(e){}}
 }
 async function save(){
   /* coleta textos atuais */

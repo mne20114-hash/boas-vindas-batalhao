@@ -30,9 +30,13 @@
     if (!e) { e = mk('i', { 'data-cfgx': '1' }); e.style.display = 'none'; FOOT.appendChild(e); }
     return e;
   }
-  var cfg; try { cfg = JSON.parse(holder().textContent || '{}'); } catch (e) { cfg = {}; }
-  ['add', 'del', 'sord', 'shid'].forEach(function (k) { cfg[k] = cfg[k] || []; });
-  ['txt', 'st', 'stm', 'g', 'gm', 'ord', 'img', 'car'].forEach(function (k) { cfg[k] = cfg[k] || {}; });
+  var cfg;
+  function lerCfg() {
+    try { cfg = JSON.parse(holder().textContent || '{}'); } catch (e) { cfg = {}; }
+    ['add', 'del', 'sord', 'shid'].forEach(function (k) { cfg[k] = cfg[k] || []; });
+    ['txt', 'st', 'stm', 'g', 'gm', 'ord', 'img', 'car'].forEach(function (k) { cfg[k] = cfg[k] || {}; });
+  }
+  lerCfg();
   var dirty = false;
   function gravar() { holder().textContent = JSON.stringify(cfg); dirty = true; msg('Alterado — clique em Salvar'); }
   function msg(t) { var s = D.querySelector('#tb .st'); if (s) s.textContent = t; }
@@ -554,4 +558,6 @@
   new MutationObserver(function () { modo(); }).observe(B, { attributes: true, attributeFilter: ['class'] });
 
   aplicar(); fotosDoBanco();
+  /* chamado pelo editor base quando o banco tem conteúdo mais novo que o embutido na página */
+  W.__xre = function () { if (edit() && dirty) return; lerCfg(); aplicar(); fotosDoBanco(); };
 })();
