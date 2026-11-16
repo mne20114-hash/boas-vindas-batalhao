@@ -237,7 +237,12 @@
     var cou = URL.createObjectURL; URL.createObjectURL = function (f) { if (f && typeof f.type === 'string' && f.type.indexOf('image/') === 0) tipo = f.type; return cou.apply(URL, arguments); };
     var orig = HTMLCanvasElement.prototype.toBlob;
     HTMLCanvasElement.prototype.toBlob = function (cb, t, q) {
-      if (t === 'image/jpeg' && /png|webp|gif/.test(tipo)) return orig.call(this, cb, 'image/png');
+      if (t === 'image/jpeg' && /png|webp|gif/.test(tipo)) {
+        /* só mantém PNG se a imagem tiver mesmo partes transparentes; foto comum em PNG fica pesada demais */
+        var transp = false;
+        try { var px = this.getContext('2d').getImageData(0, 0, this.width, this.height).data, i; for (i = 3; i < px.length; i += 16) if (px[i] < 250) { transp = true; break; } } catch (e) { transp = true; }
+        if (transp) return orig.call(this, cb, 'image/png');
+      }
       return orig.call(this, cb, t, q);
     };
   })();
@@ -276,7 +281,7 @@
   var salvo = null;
   function semJs(d) { var c = JSON.parse(JSON.stringify(d)); delete c.js; return c; }
   function fotosDoBanco() {
-    return api('?id=eq.2&select=data').then(function (r) { return r.json(); }).then(function (j) {
+    return (W.__cfgRow ? Promise.resolve(W.__cfgRow) : api('?id=eq.2&select=data').then(function (r) { return r.json(); })).then(function (j) {
       var d = (j[0] || {}).data || {}; salvo = d; var I = d.imgs || {}, Pp = d.imgpos || {};
       $$('[data-xi]').forEach(function (el) {
         var k = el.dataset.img || el.dataset.xdup, u = I[k]; if (!u) return;
