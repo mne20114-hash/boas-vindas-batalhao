@@ -284,6 +284,7 @@
   function fotosDoBanco() {
     return (W.__cfgRow ? Promise.resolve(W.__cfgRow) : api('?id=eq.2&select=data').then(function (r) { return r.json(); })).then(function (j) {
       var d = (j[0] || {}).data || {}; salvo = d; var I = d.imgs || {}, Pp = d.imgpos || {};
+      if (d.icon) { $$('link[rel~="icon"],link[rel="apple-touch-icon"]').forEach(function (l) { l.remove(); }); ['icon', 'apple-touch-icon'].forEach(function (rel) { D.head.appendChild(mk('link', { rel: rel, type: 'image/png', href: d.icon })); }); }
       $$('[data-xi]').forEach(function (el) {
         var k = el.dataset.img || el.dataset.xdup, u = I[k]; if (!u) return;
         el.style.backgroundImage = 'url(' + u + ')';
