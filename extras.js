@@ -202,7 +202,7 @@
   /* carrossel dentro de uma foto: cfg.car = {chaveDaFoto: {n: fotos, s: segundos, fade: 1}} */
   function carros() {
     var st = D.getElementById('xcar'); if (!st) { st = mk('style', { id: 'xcar' }); D.head.appendChild(st); }
-    var a = '.col>*,.split .in>*,.card>*{position:relative}.xcar{position:relative;overflow:hidden}.xcar-t{position:absolute;inset:0;display:flex;height:100%}.xcar-t>div{flex:0 0 auto;height:100%;aspect-ratio:auto!important;background-color:#0c223a;background-size:cover;background-position:center;background-repeat:no-repeat}' +
+    var a = '.sec>.col>*{position:relative}.xcar{position:relative;overflow:hidden}.xcar-t{position:absolute;inset:0;display:flex;height:100%}.xcar-t>div{flex:0 0 auto;height:100%;aspect-ratio:auto!important;background-color:#0c223a;background-size:cover;background-position:center;background-repeat:no-repeat}' +
       '.xcar-fade{-webkit-mask-image:linear-gradient(to bottom,#000 62%,transparent 100%);mask-image:linear-gradient(to bottom,#000 62%,transparent 100%)}' +
       'body.edit .xcar-t{animation:none!important}.xcar-nav{display:none}body.edit .xcar-nav{display:flex;gap:4px;position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:3}.xcar-nav button{width:28px;height:28px;border-radius:50%;border:1px solid #fff;background:rgba(0,0,0,.6);color:#fff;font:600 13px Montserrat,sans-serif;cursor:pointer;padding:0}.xcar-nav button.on{background:#c4a468;color:#0c223a}';
     Object.keys(cfg.car).forEach(function (k, ix) {
