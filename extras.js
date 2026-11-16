@@ -62,7 +62,7 @@
     '#xmenu{display:none;flex-basis:100%;gap:3px;flex-wrap:wrap;padding-top:3px;border-top:1px solid #444}' +
     'body.edit .xcur{outline:2px solid #c4a468!important;outline-offset:3px}' +
     'body.edit .xnovo{outline:1px dashed rgba(196,164,104,.55);outline-offset:4px}' +
-    '.xfoto{width:100%;aspect-ratio:16/9;background-color:#0c223a;background-size:cover;background-position:center;background-repeat:no-repeat}body.edit .xfoto{cursor:pointer}' +
+    '.xfoto{width:100%;aspect-ratio:16/9;background-color:#0c223a;background-size:cover;background-position:center;background-repeat:no-repeat}.xfoto[style*="background-image"]{background-color:transparent}body.edit .xfoto{cursor:pointer}' +
     '.xrow{display:flex;gap:1.5rem}.xrow>.xfoto{flex:1;min-width:0;aspect-ratio:4/3}@media(max-width:767px){.xrow{flex-direction:column;gap:1rem}}' +
     '.xvid iframe{display:block;width:100%;aspect-ratio:16/9;border:0;background:#000}.xvid.ig iframe{max-width:400px;height:640px;aspect-ratio:auto;margin:0 auto;background:#fff}' +
     'body.edit .xvid{padding:10px;background:rgba(196,164,104,.25)}' +
@@ -230,6 +230,18 @@
     });
     st.textContent = a;
   }
+
+  /* PNG com fundo transparente: o editor base converte tudo para JPEG; aqui mantemos PNG quando o arquivo escolhido tem transparência possível */
+  (function () {
+    var tipo = '';
+    D.addEventListener('change', function (e) { var f = e.target && e.target.files && e.target.files[0]; if (f) tipo = f.type || ''; }, true);
+    D.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) tipo = f.type || ''; }, true);
+    var orig = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function (cb, t, q) {
+      if (t === 'image/jpeg' && /png|webp|gif/.test(tipo)) return orig.call(this, cb, 'image/png');
+      return orig.call(this, cb, t, q);
+    };
+  })();
 
   function aplicar() {
     var resta = cfg.add.slice(), v = 0;
