@@ -597,6 +597,7 @@
     '#xlivro .lv-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:16px;font:600 14px Montserrat,sans-serif;color:#0c223a}' +
     '#xlivro .lv-nav button{width:42px;height:42px;border-radius:50%;border:0;background:#0c223a;color:#fff;font-size:20px;cursor:pointer}' +
     '#xlivro .lv-nav button:disabled{opacity:.3;cursor:default}' +
+    '#xlivro .lv-pg{background:#fff;overflow:hidden}#xlivro .lv-pg img{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none;user-select:none}' +
     '#xlivro .lv-dica{font:12px Montserrat,sans-serif;color:#777;margin-top:8px}' +
     '#xlivro .lv-ed{display:none;margin:0 auto 18px;max-width:640px;padding:12px;border:2px dashed #c4a468;border-radius:8px;font:14px Montserrat,sans-serif;text-align:left}' +
     'body.edit #xlivro .lv-ed{display:block}' +
@@ -650,7 +651,8 @@
           width: w, height: h, size: 'stretch', minWidth: 240, maxWidth: 1000, minHeight: Math.round(240 * h / w), maxHeight: Math.round(1000 * h / w),
           showCover: true, usePortrait: true, mobileScrollSupport: true, maxShadowOpacity: 0.5, flippingTime: 800
         });
-        flip.loadFromImages(d.paginas);
+        var pgs = d.paginas.map(function (u) { var e = D.createElement('div'); e.className = 'lv-pg'; var i = D.createElement('img'); i.src = u; i.alt = ''; i.draggable = false; e.appendChild(i); return e; });
+        flip.loadFromHtml(pgs);
         flip.on('flip', contador); flip.on('changeOrientation', contador);
         contador();
       };
@@ -686,11 +688,11 @@
         if (++i > pdf.numPages) return Promise.resolve();
         st('Preparando página ' + i + ' de ' + pdf.numPages + '…');
         return pdf.getPage(i).then(function (pg) {
-          var v0 = pg.getViewport({ scale: 1 }), v = pg.getViewport({ scale: 1100 / v0.width });
+          var v0 = pg.getViewport({ scale: 1 }), v = pg.getViewport({ scale: 1800 / v0.width });
           var c = D.createElement('canvas'); c.width = Math.round(v.width); c.height = Math.round(v.height);
           var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
           return pg.render({ canvasContext: x, viewport: v }).promise.then(function () {
-            return new Promise(function (ok) { c.toBlob(ok, 'image/jpeg', 0.82); });
+            return new Promise(function (ok) { c.toBlob(ok, 'image/jpeg', 0.85); });
           });
         }).then(function (b) {
           var nome = base + i + '.jpg';
