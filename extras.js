@@ -652,7 +652,7 @@
           showCover: true, usePortrait: true, mobileScrollSupport: true, maxShadowOpacity: 0.5, flippingTime: 800
         });
         var pgs = d.paginas.map(function (u) { var e = D.createElement('div'); e.className = 'lv-pg'; var i = D.createElement('img'); i.src = u; i.alt = ''; i.draggable = false; e.appendChild(i); return e; });
-        flip.loadFromHtml(pgs);
+        flip.loadFromHTML(pgs);
         flip.on('flip', contador); flip.on('changeOrientation', contador);
         contador();
       };
