@@ -21,7 +21,7 @@ if (data) {
   const attr = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   const early = fs.readFileSync('early.js', 'utf8').replace(/<\/script/gi, '<\\/script');
   // __ldx=1 desliga o carregador antigo do rodapé: o código do editor avançado já vai embutido em __CFG.js
-  const bake = `<script>window.__CFG=${esc(JSON.stringify(data))};window.__ldx=1;window.__cfgRow=[{data:window.__CFG}];</script>\n<script>${early}</script>`;
+  const bake = `<script>window.__CFG=${esc(JSON.stringify(data))};try{var __c=JSON.parse(localStorage.getItem('x35cfg')||'null');if(__c&&Number(__c.rev||0)>Number(window.__CFG.rev||0))window.__CFG=__c}catch(e){}window.__ldx=1;window.__cfgRow=[{data:window.__CFG}];</script>\n<script>${early}</script>`;
   let pre = '';
   const imgs = data.imgs || {};
   if (imgs.i0) pre += `<link rel="preload" as="image" href="${attr(imgs.i0)}" fetchpriority="high">\n`;

@@ -36,7 +36,14 @@ async function load(){
   }catch(e){}
   apply(state);
   /* se o banco mudou depois da publicação, atualiza também os blocos do editor avançado */
-  if(fresh&&baked&&JSON.stringify(fresh)!==baked){window.__cfgRow=[{data:fresh}];if(window.__xre)try{window.__xre()}catch(e){}}
+  if(fresh){try{localStorage.setItem('x35cfg',JSON.stringify(fresh))}catch(e){}}
+  /* conteúdo publicado desatualizado: recarrega uma vez (escondido) já com a versão nova guardada no aparelho */
+  if(fresh&&baked&&JSON.stringify(fresh)!==baked){
+    const k='xrl'+(fresh.rev||'');let ok=false;try{ok=localStorage.getItem('x35cfg')!==null&&!sessionStorage.getItem(k);if(ok)sessionStorage.setItem(k,'1')}catch(e){}
+    if(ok&&!document.body.classList.contains('edit')){location.reload();return}
+    window.__cfgRow=[{data:fresh}];if(window.__xre)try{window.__xre()}catch(e){}
+  }
+  const h=document.getElementById('xhide');if(h)h.remove();
 }
 async function save(){
   /* coleta textos atuais */
