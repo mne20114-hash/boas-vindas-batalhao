@@ -334,7 +334,7 @@
   function marca(el) { if (!el || el === cur) return; if (cur) cur.classList.remove('xcur'); cur = el; cur.classList.add('xcur'); if (D.getElementById('xst').style.display === 'block') estilo(cur); }
   function volta() { if (!lastR) return false; var s = getSelection(); s.removeAllRanges(); s.addRange(lastR); return true; }
   function cmd(c, v) { if (!volta()) return; D.execCommand('styleWithCSS', false, true); D.execCommand(c, false, v == null ? null : v); toca(); }
-  function toca() { var n = lastR && lastR.commonAncestorContainer; n = n && (n.nodeType === 1 ? n : n.parentElement); var h = n && n.closest('[data-xt]'); if (h) cfg.txt[h.dataset.x] = h.innerHTML; dirty = true; msg('Alterado — clique em Salvar'); }
+  function toca() { var n = lastR && lastR.commonAncestorContainer; n = n && (n.nodeType === 1 ? n : n.parentElement); var h = n && n.closest('[data-xt]'); if (h) { cfg.txt[h.dataset.x] = h.innerHTML; gravar(); } dirty = true; msg('Alterado — clique em Salvar'); }
   function fonte(passo) {
     if (!volta()) return; var r = lastR, n = r.commonAncestorContainer, host = (n.nodeType === 1 ? n : n.parentElement).closest('[contenteditable=true]'); if (!host) return;
     var lim = function (v) { return Math.min(120, Math.max(8, Math.round(v))); };
