@@ -22,6 +22,12 @@
     '.xmapa .xdraw{opacity:1;fill:rgba(255,255,255,.25);stroke:#fff;stroke-dasharray:6 4}' +
     'body.edit .xmapa.desenhando{cursor:crosshair}' +
     '.xabas button .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle;box-shadow:0 0 6px currentColor}' +
+    '.xab-pan{display:none;width:100%;margin-top:10px;padding:12px;border:2px dashed #c4a468;border-radius:8px;background:#fffaf0;font:13px Montserrat,sans-serif;color:#0c223a;text-align:left}body.edit .xab-pan{display:block}' +
+    '.xab-pan span{color:#8a6d2f;font-size:12px}.xab-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}' +
+    '.xab-row input[type=text]{flex:1;min-width:120px;padding:7px 9px;border:1px solid #ccc;border-radius:4px;font:14px Montserrat,sans-serif}' +
+    '.xab-row input[type=color]{width:40px;height:34px;padding:0;border:1px solid #ccc;border-radius:4px;background:#fff}' +
+    '.xabas .xab-row button{padding:7px 11px;font-size:13px;border-width:1px}.xabas .xab-row button.xab-salvar{background:#c4a468;border-color:#c4a468;color:#0c223a}' +
+    '.xab-msg{margin-top:8px;color:#8a6d2f}' +
     '.xab-dica{display:none;width:100%;text-align:center;font:12px Montserrat,sans-serif;color:#8a6d2f}body.edit .xab-dica{display:block}';
   D.head.appendChild(css);
 
@@ -92,63 +98,88 @@
     }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); location.reload(); }).catch(function (e) { alert('Não foi possível salvar: ' + e.message); });
   }
   function montarMapa(k, foto, fig, c) {
-    var areas = c.areas || [];
+    c.areas = c.areas || [];
     foto.style.display = 'none';
-    var mapa = D.createElement('div'); mapa.className = 'xmapa'; mapa.setAttribute('contenteditable', 'false');
     var NS = 'http://www.w3.org/2000/svg';
+    var mapa = D.createElement('div'); mapa.className = 'xmapa'; mapa.setAttribute('contenteditable', 'false');
     mapa.innerHTML = '<img alt="Vista aérea do batalhão" src="' + c.mapa.img + '" loading="lazy">';
     var svg = D.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); mapa.appendChild(svg);
-    var polys = areas.map(function (a, i) {
-      var cor = a.cor || NEON[i % NEON.length], pg = D.createElementNS(NS, 'polygon');
-      pg.setAttribute('points', (a.pts || []).map(function (p) { return p[0] + ',' + p[1]; }).join(' '));
-      pg.style.stroke = cor; pg.style.fill = rgba(cor, .28); pg.style.filter = 'drop-shadow(0 0 4px ' + cor + ') drop-shadow(0 0 10px ' + cor + ')';
-      svg.appendChild(pg); return pg;
-    });
     var bar = D.createElement('div'); bar.className = 'xabas'; bar.setAttribute('contenteditable', 'false');
-    var atual = -1;
-    function sel(i) {
-      atual = atual === i ? -1 : i;
-      polys.forEach(function (p, j) { p.classList.toggle('on', j === atual); });
-      [].forEach.call(bar.querySelectorAll('button[data-i]'), function (b) { b.classList.toggle('on', +b.dataset.i === atual); });
+    var botoes = D.createElement('div'); botoes.style.cssText = 'display:contents'; bar.appendChild(botoes);
+    var pan = D.createElement('div'); pan.className = 'xab-pan'; bar.appendChild(pan);
+    var atual = -1, polys = [], desenho = -1, pts = [], temp = null;
+    function cor(a, i) { return a.cor || NEON[i % NEON.length]; }
+    function pintar(pg, a, i) {
+      var cr = cor(a, i);
+      pg.setAttribute('points', (a.pts || []).map(function (p) { return p[0] + ',' + p[1]; }).join(' '));
+      pg.style.stroke = cr; pg.style.fill = rgba(cr, .28); pg.style.filter = 'drop-shadow(0 0 4px ' + cr + ') drop-shadow(0 0 10px ' + cr + ')';
     }
-    areas.forEach(function (a, i) {
-      var cor = a.cor || NEON[i % NEON.length], b = D.createElement('button'); b.type = 'button'; b.dataset.i = i;
-      b.innerHTML = '<span class="dot" style="background:' + cor + ';color:' + cor + '"></span>'; b.appendChild(D.createTextNode(a.nome));
-      b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); sel(i); };
-      bar.appendChild(b);
-    });
-    /* ferramentas do modo edição */
-    function ferr(txt, fn) { var b = D.createElement('button'); b.type = 'button'; b.className = 'xab-ed'; b.textContent = txt; b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); fn(); }; bar.appendChild(b); return b; }
-    ferr('✎ Nomes dos botões', function () {
-      var v = prompt('Nomes das áreas, separados por vírgula (a ordem é a dos botões).\nSalve antes as outras alterações: a página recarrega depois.', areas.map(function (a) { return a.nome; }).join(', '));
-      if (v == null) return; var n = v.split(',').map(function (x) { return x.trim(); }).filter(Boolean); if (!n.length) return;
-      c.areas = n.map(function (nome, i) { var a = areas[i] || { pts: [] }; return { nome: nome, cor: a.cor || NEON[i % NEON.length], pts: a.pts || [] }; });
-      salvarAbas(k, c);
-    });
-    var pts = [], temp = null, bDes, bOk, bNo;
-    function fim() { pts = []; if (temp) temp.remove(); temp = null; mapa.classList.remove('desenhando'); bDes.style.display = ''; bOk.style.display = bNo.style.display = 'none'; }
-    bDes = ferr('✏️ Desenhar a área do botão selecionado', function () {
-      if (atual < 0) { alert('Primeiro clique no botão da área que vai desenhar.'); return; }
-      pts = []; mapa.classList.add('desenhando'); polys[atual].classList.remove('on');
+    function sel(i, forcar) {
+      atual = (!forcar && atual === i) ? -1 : i;
+      polys.forEach(function (p, j) { p.classList.toggle('on', j === atual); });
+      [].forEach.call(botoes.children, function (b, j) { b.classList.toggle('on', j === atual); });
+    }
+    function desenhar() {
+      polys.forEach(function (p) { p.remove(); }); polys = []; botoes.innerHTML = '';
+      c.areas.forEach(function (a, i) {
+        var pg = D.createElementNS(NS, 'polygon'); pintar(pg, a, i); svg.insertBefore(pg, temp); polys.push(pg);
+        var b = D.createElement('button'); b.type = 'button'; b.dataset.i = i;
+        b.innerHTML = '<span class="dot" style="background:' + cor(a, i) + ';color:' + cor(a, i) + '"></span>'; b.appendChild(D.createTextNode(a.nome || 'Sem nome'));
+        b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); sel(i); };
+        botoes.appendChild(b);
+      });
+      sel(atual >= c.areas.length ? -1 : atual, true);
+    }
+    /* painel de edição: nome, cor, desenhar, excluir */
+    function painel() {
+      pan.innerHTML = '<b>Áreas do mapa</b> <span>(só aparece no modo edição)</span>';
+      c.areas.forEach(function (a, i) {
+        var row = D.createElement('div'); row.className = 'xab-row';
+        var ci = D.createElement('input'); ci.type = 'color'; ci.value = cor(a, i); ci.title = 'Cor da área';
+        ci.oninput = function () { a.cor = ci.value; desenhar(); sel(i, true); };
+        var ni = D.createElement('input'); ni.type = 'text'; ni.value = a.nome || ''; ni.placeholder = 'Nome do botão';
+        ni.oninput = function () { a.nome = ni.value; desenhar(); sel(i, true); };
+        var bd = D.createElement('button'); bd.type = 'button'; bd.textContent = (a.pts && a.pts.length) ? '✏️ Redesenhar' : '✏️ Desenhar';
+        bd.onclick = function (e) { e.preventDefault(); e.stopPropagation(); comecar(i); };
+        var bx = D.createElement('button'); bx.type = 'button'; bx.textContent = '🗑'; bx.title = 'Excluir esta área';
+        bx.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (!confirm('Excluir a área "' + (a.nome || 'Sem nome') + '"?')) return; c.areas.splice(i, 1); atual = -1; desenhar(); painel(); };
+        row.appendChild(ci); row.appendChild(ni); row.appendChild(bd); row.appendChild(bx); pan.appendChild(row);
+      });
+      var acoes = D.createElement('div'); acoes.className = 'xab-row';
+      var bn = D.createElement('button'); bn.type = 'button'; bn.textContent = '+ Nova área';
+      bn.onclick = function (e) { e.preventDefault(); e.stopPropagation(); var i = c.areas.length; c.areas.push({ nome: 'Nova área', cor: NEON[i % NEON.length], pts: [] }); desenhar(); painel(); comecar(i); };
+      var bs = D.createElement('button'); bs.type = 'button'; bs.className = 'xab-salvar'; bs.textContent = '💾 Salvar áreas';
+      bs.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (desenho >= 0) { alert('Conclua ou cancele o desenho antes de salvar.'); return; } bs.textContent = 'Salvando…'; salvarAbas(k, c); };
+      acoes.appendChild(bn); acoes.appendChild(bs); pan.appendChild(acoes);
+      var aviso = D.createElement('div'); aviso.className = 'xab-msg';
+      aviso.textContent = desenho >= 0 ? 'Clique na foto, ponto por ponto, em volta da área "' + (c.areas[desenho].nome || '') + '".' : 'Salve antes as outras alterações da página: ao salvar as áreas, a página recarrega.';
+      pan.appendChild(aviso);
+      if (desenho >= 0) {
+        var r2 = D.createElement('div'); r2.className = 'xab-row';
+        var ok = D.createElement('button'); ok.type = 'button'; ok.className = 'xab-salvar'; ok.textContent = '✔ Concluir desenho';
+        ok.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (pts.length < 3) { alert('Marque pelo menos 3 pontos.'); return; } c.areas[desenho].pts = pts.map(function (p) { return [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100]; }); var i = desenho; parar(); sel(i, true); };
+        var un = D.createElement('button'); un.type = 'button'; un.textContent = '↶ Desfazer ponto';
+        un.onclick = function (e) { e.preventDefault(); e.stopPropagation(); pts.pop(); traco(); };
+        var no = D.createElement('button'); no.type = 'button'; no.textContent = '✖ Cancelar';
+        no.onclick = function (e) { e.preventDefault(); e.stopPropagation(); var i = desenho; parar(); sel(i, true); };
+        r2.appendChild(ok); r2.appendChild(un); r2.appendChild(no); pan.appendChild(r2);
+      }
+    }
+    function traco() { if (temp) temp.setAttribute('points', pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' ')); }
+    function comecar(i) {
+      parar(true); desenho = i; pts = []; sel(i, true); if (polys[i]) polys[i].classList.remove('on');
       temp = D.createElementNS(NS, 'polygon'); temp.setAttribute('class', 'xdraw'); svg.appendChild(temp);
-      bDes.style.display = 'none'; bOk.style.display = bNo.style.display = ''; dica.textContent = 'Clique na foto, ponto por ponto, em volta da área "' + areas[atual].nome + '". Depois clique em Concluir.';
-    });
-    bOk = ferr('✔ Concluir desenho', function () {
-      if (pts.length < 3) { alert('Marque pelo menos 3 pontos.'); return; }
-      c.areas[atual].pts = pts.map(function (p) { return [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100]; }); salvarAbas(k, c);
-    });
-    bNo = ferr('✖ Cancelar', function () { fim(); sel(atual); dica.textContent = textoDica; });
-    bOk.style.display = bNo.style.display = 'none';
+      mapa.classList.add('desenhando'); painel(); mapa.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function parar(semPainel) { desenho = -1; pts = []; if (temp) temp.remove(); temp = null; mapa.classList.remove('desenhando'); desenhar(); if (!semPainel) painel(); }
     mapa.addEventListener('click', function (e) {
-      if (!mapa.classList.contains('desenhando')) return; e.preventDefault(); e.stopPropagation();
-      var r = mapa.getBoundingClientRect(); pts.push([(e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100]);
-      temp.setAttribute('points', pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' '));
+      if (desenho < 0) return; e.preventDefault(); e.stopPropagation();
+      var r = mapa.getBoundingClientRect(); pts.push([(e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100]); traco();
     }, true);
-    var textoDica = 'Para corrigir uma área: clique no botão dela e depois em "Desenhar". Para outra foto aérea, mande para o Claude.';
-    var dica = D.createElement('div'); dica.className = 'xab-dica'; dica.textContent = textoDica; bar.appendChild(dica);
     fig.parentNode.insertBefore(mapa, fig.nextSibling); mapa.parentNode.insertBefore(bar, mapa.nextSibling);
     feitos[k] = { bar: bar, fig: fig, mapa: mapa };
-    if (areas.length) sel(0);
+    desenhar(); painel();
+    if (c.areas.length) sel(0, true);
     return true;
   }
   function posicionar() { for (var k in feitos) { var f = feitos[k], ult = f.fig; if (!f.fig.isConnected) continue; if (f.mapa) { if (ult.nextElementSibling !== f.mapa) ult.parentNode.insertBefore(f.mapa, ult.nextSibling); ult = f.mapa; } if (ult.nextElementSibling !== f.bar) ult.parentNode.insertBefore(f.bar, ult.nextSibling); } }
