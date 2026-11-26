@@ -262,7 +262,12 @@
       e.stopImmediatePropagation(); e.preventDefault();
       api('?id=eq.2&select=rev:data->>rev').then(function (r) { return r.json(); }).then(function (j) {
         var atual = String((j[0] || {}).rev || ''), meu = String(salvo.rev || '');
-        if (atual === meu) { livre = true; sv.click(); return; }
+        if (atual === meu) {
+          livre = true; sv.click();
+          /* o banco gera uma versão nova a cada salvamento: esta aba passa a conhecer a versão que ela mesma gravou */
+          [2500, 7000].forEach(function (t) { setTimeout(function () { api('?id=eq.2&select=rev:data->>rev').then(function (r) { return r.json(); }).then(function (k) { if (k[0] && k[0].rev) salvo.rev = k[0].rev; }).catch(function () { }); }, t); });
+          return;
+        }
         var w = D.getElementById('xrev'); if (!w) { w = mk('div', { id: 'xrev', style: 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:20px' }); D.body.appendChild(w); }
         w.innerHTML = '<div style="background:#fff;color:#0c223a;max-width:420px;padding:22px;border-radius:8px;font:15px/1.5 Montserrat,sans-serif"><b>Esta aba está desatualizada.</b><br>A página recebeu uma atualização depois que você abriu esta aba. Para não apagar essa atualização, o salvamento foi bloqueado. Recarregue a página e refaça a alteração que estava fazendo.<div style="margin-top:14px;display:flex;gap:8px"><button id=xrev1 style="padding:8px 14px;background:#c4a468;border:0;font-weight:600;cursor:pointer">Recarregar agora</button><button id=xrev2 style="padding:8px 14px;background:#eee;border:0;cursor:pointer">Fechar</button></div></div>';
         w.style.display = 'flex';
