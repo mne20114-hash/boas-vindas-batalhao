@@ -329,26 +329,36 @@
   var lastR = null, cur = null;
   D.addEventListener('selectionchange', function () {
     var s = getSelection(); if (!s.rangeCount) return; var n = s.anchorNode; n = n && (n.nodeType === 1 ? n : n.parentElement);
-    if (n && n.closest('[contenteditable=true]') && !n.closest('#tb,#xpan,#xst,#xmod')) { lastR = s.getRangeAt(0).cloneRange(); marca(n.closest(KS)); }
+    if (n && n.closest('[contenteditable=true]') && !n.closest('#tb,#xpan,#xst,#xmod')) { lastR = s.getRangeAt(0).cloneRange(); marca(n.closest(KS)); mostraTam(); }
   });
   function marca(el) { if (!el || el === cur) return; if (cur) cur.classList.remove('xcur'); cur = el; cur.classList.add('xcur'); if (D.getElementById('xst').style.display === 'block') estilo(cur); }
   function volta() { if (!lastR) return false; var s = getSelection(); s.removeAllRanges(); s.addRange(lastR); return true; }
   function cmd(c, v) { if (!volta()) return; D.execCommand('styleWithCSS', false, true); D.execCommand(c, false, v == null ? null : v); toca(); }
   function toca() { var n = lastR && lastR.commonAncestorContainer; n = n && (n.nodeType === 1 ? n : n.parentElement); var h = n && n.closest('[data-xt]'); if (h) { cfg.txt[h.dataset.x] = h.innerHTML; gravar(); } dirty = true; msg('Alterado — clique em Salvar'); }
-  function fonte(passo) {
-    if (!volta()) return; var r = lastR, n = r.commonAncestorContainer, host = (n.nodeType === 1 ? n : n.parentElement).closest('[contenteditable=true]'); if (!host) return;
-    var lim = function (v) { return Math.min(120, Math.max(8, Math.round(v))); };
-    if (r.collapsed) {
+  function semTam(n) { if (n.querySelectorAll) [].forEach.call(n.querySelectorAll('[style*="font-size"]'), function (e) { e.style.fontSize = ''; if (!e.getAttribute('style')) e.removeAttribute('style'); }); }
+  function hostDe(r) { var n = r && r.commonAncestorContainer; return n && (n.nodeType === 1 ? n : n.parentElement).closest('[contenteditable=true]'); }
+  /* aplica um tamanho exato (px) ao trecho selecionado; sem seleção, ao texto inteiro */
+  function tam(px) {
+    if (!volta()) return; var r = lastR, host = hostDe(r); if (!host) return;
+    px = Math.min(120, Math.max(8, Math.round(px)));
+    if (r.collapsed || r.toString().trim() === host.textContent.trim()) {
+      semTam(host);
       var sp = host.querySelector(':scope > span[data-fs]');
-      if (!sp) { sp = mk('span', { 'data-fs': '1' }); while (host.firstChild) sp.appendChild(host.firstChild); host.appendChild(sp); }
-      sp.style.fontSize = lim((parseFloat(sp.style.fontSize) || parseFloat(getComputedStyle(host).fontSize)) + passo) + 'px';
+      if (!sp || host.childNodes.length !== 1) { sp = mk('span', { 'data-fs': '1' }); while (host.firstChild) sp.appendChild(host.firstChild); host.appendChild(sp); }
+      sp.style.fontSize = px + 'px';
+      var nr0 = D.createRange(); nr0.selectNodeContents(host); lastR = nr0;
     } else {
-      var base = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement, s2 = mk('span');
-      s2.style.fontSize = lim(parseFloat(getComputedStyle(base).fontSize) + passo) + 'px'; s2.appendChild(r.extractContents()); r.insertNode(s2);
-      var nr = D.createRange(); nr.selectNodeContents(s2); lastR = nr; volta();
+      var fr = r.extractContents(), s2 = mk('span'); semTam(fr); s2.appendChild(fr); s2.style.fontSize = px + 'px'; r.insertNode(s2);
+      var nr = D.createRange(); nr.selectNodeContents(s2); lastR = nr;
     }
-    toca();
+    volta(); toca(); mostraTam();
   }
+  function tamAtual() {
+    var r = lastR; if (!r) return 0; var n = r.startContainer; n = n.nodeType === 1 ? (n.childNodes[r.startOffset] && n.childNodes[r.startOffset].nodeType === 1 ? n.childNodes[r.startOffset] : n) : n.parentElement;
+    return Math.round(parseFloat(getComputedStyle(n).fontSize)) || 0;
+  }
+  function mostraTam() { var i = D.getElementById('xtam'); if (i && D.activeElement !== i) { var v = tamAtual(); if (v) i.value = v; } }
+  function fonte(passo) { var v = tamAtual(); if (v) tam(v + passo); }
   function alinhar(v) { if (!cur) return; setSt(K(cur), 'al', v); }
   function setSt(k, p, v, mob) {
     var o = mob ? cfg.stm : cfg.st, ant = JSON.stringify(o[k] || {});
@@ -362,7 +372,17 @@
     function sep() { f.appendChild(mk('i')); }
     b('<b>N</b>', 'Negrito', function () { cmd('bold'); }); b('<i style="all:unset;font-style:italic">I</i>', 'Itálico', function () { cmd('italic'); });
     b('<u>S</u>', 'Sublinhado', function () { cmd('underline'); }); b('<s>T</s>', 'Riscado', function () { cmd('strikeThrough'); }); sep();
-    b('A+', 'Aumentar fonte', function () { fonte(2); }); b('A−', 'Diminuir fonte', function () { fonte(-2); });
+    b('A−', 'Diminuir fonte', function () { fonte(-1); });
+    (function () {
+      var l = mk('label', { title: 'Tamanho da fonte do trecho selecionado (px). Digite o número e aperte Enter.' }, 'Tamanho');
+      var i = mk('input', { id: 'xtam', type: 'number', min: '8', max: '120', step: '1', inputmode: 'numeric', style: 'width:58px;padding:4px;border-radius:4px;border:1px solid #666;background:#fff;color:#000;font:14px sans-serif' });
+      i.onmousedown = function (e) { e.stopPropagation(); };
+      function ap() { var v = parseFloat(i.value); if (v) tam(v); }
+      i.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); ap(); } };
+      i.onchange = ap;
+      l.appendChild(i); f.appendChild(l);
+    })();
+    b('A+', 'Aumentar fonte', function () { fonte(1); });
     [['Cor', 'foreColor', '#0c223a'], ['Marca', 'hiliteColor', '#fff3a3']].forEach(function (c) {
       var l = mk('label', {}, c[0]), i = mk('input', { type: 'color', value: c[2] }); i.oninput = function () { cmd(c[1], i.value); }; l.appendChild(i); f.appendChild(l);
     }); sep();
