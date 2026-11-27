@@ -8,7 +8,7 @@
   var css = D.createElement('style');
   css.textContent =
     '#xredes{text-align:center;padding:8px 0 28px;font-family:Montserrat,sans-serif;color:#0c223a}' +
-    '#xredes .rd-lema{max-width:900px;margin:16px auto 0;text-align:right;font-size:17px;font-weight:700;font-style:italic;color:#0c223a}' +
+    '#xredes .rd-lema{max-width:900px;margin:16px auto 0;text-align:right;font-size:17px;font-weight:700;font-style:italic!important;color:#0c223a;box-sizing:border-box}' +
     '#xredes a.rd-ig{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid #e1e4e8;border-radius:999px;color:#0c223a;text-decoration:none;font-size:16px;font-weight:600;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06)}' +
     '#xredes a.rd-ig:hover{border-color:#d62976}' +
     '#xredes .rd-t{box-sizing:border-box;width:250px;aspect-ratio:1000/680;margin:0 auto 14px;padding:16px 34px 48px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;' +
@@ -108,6 +108,35 @@
   function aplicar() {
     var p = ler()[modo()] || {};
     for (var k in ALVOS) { var el = D.querySelector(ALVOS[k]); if (!el) continue; el.classList.add('xarr'); el.dataset.arr = k; var v = p[k] || [0, 0]; el.style.translate = v[0] + 'px ' + v[1] + 'px'; }
+    var tm = (ler().tam || {})[modo()] || {};
+    for (var q in TAM) { var e2 = D.querySelector(TAM[q].sel); if (!e2) continue; var o = tm[q] || {};
+      e2.style.fontSize = o.fs ? o.fs + 'px' : ''; e2.style.width = o.w ? o.w + 'px' : ''; if (q === 'lema') e2.style.maxWidth = o.w ? 'none' : '';
+      if (q === 'lema') e2.style.marginRight = o.w ? '4%' : ''; }
+    mostraTam();
+  }
+  /* tamanho da fonte e largura do campo (modo edição) */
+  var TAM = { lema: { sel: '#xredes .rd-lema', nome: 'Tropa forte…' }, rdt: { sel: '#xredes .rd-t', nome: 'Balão' } };
+  function mudaTam(k, campo, passo) {
+    var el = D.querySelector(TAM[k].sel); if (!el) return;
+    var t = ler(), m = modo(); t.tam = t.tam || {}; t.tam[m] = t.tam[m] || {}; var o = t.tam[m][k] = t.tam[m][k] || {};
+    if (campo === 'fs') o.fs = Math.max(8, Math.min(72, Math.round(parseFloat(getComputedStyle(el).fontSize)) + passo));
+    else o.w = Math.max(100, Math.min(1000, Math.round(el.getBoundingClientRect().width) + passo));
+    holder().textContent = JSON.stringify(t); var st = D.querySelector('#tb .st'); if (st) st.textContent = 'Alterado — clique em Salvar';
+    aplicar();
+  }
+  function mostraTam() { for (var k in TAM) { var el = D.querySelector(TAM[k].sel), sp = D.getElementById('xtam-' + k); if (el && sp) sp.textContent = Math.round(parseFloat(getComputedStyle(el).fontSize)) + 'px · ' + Math.round(el.getBoundingClientRect().width) + 'px'; } }
+  function painelTam(dica) {
+    var w = D.createElement('div'); w.style.cssText = 'margin-top:8px;display:grid;gap:6px;justify-content:center';
+    for (var k in TAM) (function (k) {
+      var r = D.createElement('div'); r.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:4px;justify-content:center;font:12px Montserrat,sans-serif;color:#0c223a';
+      function b(t, fn) { var x = D.createElement('button'); x.type = 'button'; x.textContent = t; x.style.cssText = 'min-width:30px;padding:4px 8px;border:1px solid #c4a468;border-radius:4px;background:#fff;cursor:pointer;font:600 12px Montserrat,sans-serif'; x.onmousedown = function (e) { e.preventDefault(); }; x.onclick = function (e) { e.preventDefault(); e.stopPropagation(); fn(); }; r.appendChild(x); }
+      var n = D.createElement('b'); n.textContent = TAM[k].nome + ':'; r.appendChild(n);
+      r.appendChild(D.createTextNode(' fonte')); b('A−', function () { mudaTam(k, 'fs', -1); }); b('A+', function () { mudaTam(k, 'fs', 1); });
+      r.appendChild(D.createTextNode(' largura')); b('−', function () { mudaTam(k, 'w', -20); }); b('+', function () { mudaTam(k, 'w', 20); });
+      var sp = D.createElement('span'); sp.id = 'xtam-' + k; sp.style.cssText = 'color:#8a6d2f;margin-left:4px'; r.appendChild(sp);
+      w.appendChild(r);
+    })(k);
+    dica.appendChild(w); mostraTam();
   }
   function gravar(k, v) {
     var t = ler(), m = modo(); t[m] = t[m] || {};
@@ -165,8 +194,8 @@
     aplicar(); textos();
     var box = D.getElementById('xredes');
     if (box && !dica) { dica = D.createElement('p'); dica.className = 'xarr-dica'; dica.setAttribute('contenteditable', 'false'); dica.textContent = 'Arraste o soldado, os textos e o @ para onde quiser. Clique num texto para editar. Depois clique em Salvar. As posições do computador e do celular são separadas.'; var rz = D.createElement('button'); rz.type = 'button'; rz.textContent = '↺ Voltar tudo ao lugar original'; rz.style.cssText = 'display:block;margin:6px auto 0;padding:6px 12px;border:1px solid #c4a468;border-radius:4px;background:#fffaf0;color:#8a6d2f;cursor:pointer;font:12px Montserrat,sans-serif';
-      rz.onclick = function (e) { e.preventDefault(); e.stopPropagation(); for (var k in ALVOS) { var el = D.querySelector(ALVOS[k]); if (el) el.style.translate = '0px 0px'; gravar(k, null); } };
-      dica.appendChild(rz); box.appendChild(dica); }
+      rz.onclick = function (e) { e.preventDefault(); e.stopPropagation(); for (var k in ALVOS) { var el = D.querySelector(ALVOS[k]); if (el) el.style.translate = '0px 0px'; gravar(k, null); } var t = ler(); if (t.tam) { delete t.tam[modo()]; holder().textContent = JSON.stringify(t); } aplicar(); };
+      dica.appendChild(rz); painelTam(dica); box.appendChild(dica); }
     if (n < 30 && (!D.querySelector('#xsold') || !box || !D.querySelector('#xredes .rd-lema'))) setTimeout(function () { iniciar(n + 1); }, 300);
   }
   iniciar(0);
