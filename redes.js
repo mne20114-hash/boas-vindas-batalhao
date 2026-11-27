@@ -50,3 +50,29 @@
   }
   iniciar();
 })();
+
+/* ===== Soldado (desenho) no espaço vazio acima de "Nos siga nas redes sociais" ===== */
+(function () {
+  var W = window, D = document;
+  if (W.__soldOk) return; W.__soldOk = 1;
+  var css = D.createElement('style');
+  css.textContent =
+    'section.cmd.xsold{padding-bottom:0!important;padding-top:24px!important}' +
+    '#xsold{display:block;margin:0 auto;height:320px;width:auto;max-width:90%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 6px 14px rgba(0,0,0,.18));opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform .8s ease}' +
+    '#xsold.on{opacity:1;transform:none}' +
+    '@media(max-width:767px){#xsold{height:240px}}';
+  D.head.appendChild(css);
+  function iniciar() {
+    var s = D.querySelector('section.cmd'); if (!s) return setTimeout(iniciar, 300);
+    if (D.getElementById('xsold')) return;
+    var im = D.createElement('img'); im.id = 'xsold'; im.alt = 'Soldado do Exército Brasileiro fazendo sinal de positivo';
+    im.src = 'https://nhghjpsnggwhdgfkpnyv.supabase.co/storage/v1/object/public/batalhao/soldado-35bi.webp'; im.loading = 'lazy'; im.decoding = 'async';
+    im.setAttribute('contenteditable', 'false');
+    s.classList.add('xsold'); s.appendChild(im);
+    if ('IntersectionObserver' in W) {
+      var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { im.classList.add('on'); io.disconnect(); } }); }, { threshold: .2 });
+      io.observe(im);
+    } else im.classList.add('on');
+  }
+  iniciar();
+})();
