@@ -87,7 +87,9 @@
     var t = ler(), p = t[modo()] || {}, tm = (t.tam || {})[modo()] || {};
     for (var k in ALVOS) {
       var el = ALVOS[k](); el.classList.add('xarr'); el.dataset.arr = k;
-      var v = p[k] || [0, 0]; el.style.translate = v[0] + 'px ' + v[1] + 'px';
+      var v = p[k] || [0, 0];
+      if (k === 'cena') { el.style.translate = v[0] + 'px 0px'; el.style.marginTop = v[1] + 'px'; } /* subir/descer a imagem também move o fim da página */
+      else el.style.translate = v[0] + 'px ' + v[1] + 'px';
       var o = tm[k] || {};
       el.style.fontSize = o.fs ? o.fs + 'px' : '';
       el.style.width = o.w ? o.w + 'px' : '';
@@ -144,6 +146,7 @@
     if (!el.isContentEditable) e.preventDefault();
     e.stopPropagation();
     var v = (el.style.translate || '0px 0px').split(' ').map(parseFloat);
+    if (el === cena) { v[1] = parseFloat(el.style.marginTop) || 0; el.style.marginTop = '0px'; el.style.translate = (v[0] || 0) + 'px ' + v[1] + 'px'; }
     drag = { el: el, x0: e.clientX, y0: e.clientY, bx: v[0] || 0, by: v[1] || 0, moveu: false, id: e.pointerId };
   }, true);
   D.addEventListener('pointermove', function (e) {
@@ -160,7 +163,7 @@
   function soltar() {
     if (!drag) return; var el = drag.el; el.classList.remove('xarrastando');
     if (drag.moveu) { var v = el.style.translate.split(' ').map(parseFloat); gravarPos(el.dataset.arr, [v[0] || 0, v[1] || 0]); }
-    drag = null;
+    drag = null; if (el === cena) aplicar();
   }
   D.addEventListener('pointerup', soltar, true); D.addEventListener('pointercancel', soltar, true);
   /* clique na frase (fora do modo edição) mostra o campo da senha do administrador */
