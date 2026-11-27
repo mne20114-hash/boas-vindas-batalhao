@@ -26,7 +26,12 @@
     '#xredes .rd-ed button{padding:8px 14px;border:0;border-radius:4px;background:#c4a468;color:#0c223a;font-weight:700;cursor:pointer}' +
     '.xarr{z-index:6}' +
     'body.edit .xarr{cursor:move;outline:2px dashed #c4a468;outline-offset:3px;touch-action:none}' +
-    'body.edit .xarr.xarrastando{outline-color:#0c223a;opacity:.85}';
+    'body.edit .xarr.xarrastando{outline-color:#0c223a;opacity:.85}' +
+    /* a página termina na imagem: atualizações e rodapé ficam ocultos (aparecem no modo edição) */
+    'body:not(.edit) #atualizacoes,body:not(.edit) footer.bumper{display:none!important}' +
+    'body:not(.edit) #atualizacoes.xpin{display:block!important;padding-top:24px;padding-bottom:40px}' +
+    'body:not(.edit) #atualizacoes.xpin .col>:not(#admin){display:none!important}' +
+    'body:not(.edit) #xrd-lema{cursor:pointer}';
   D.head.appendChild(css);
 
   /* ---------- armazenamento no rodapé ---------- */
@@ -158,6 +163,13 @@
     drag = null;
   }
   D.addEventListener('pointerup', soltar, true); D.addEventListener('pointercancel', soltar, true);
+  /* clique na frase (fora do modo edição) mostra o campo da senha do administrador */
+  D.addEventListener('click', function (e) {
+    if (editando() || !e.target.closest || !e.target.closest('#xrd-lema')) return;
+    var u = D.getElementById('atualizacoes'); if (!u) return;
+    var abrir = !u.classList.contains('xpin'); u.classList.toggle('xpin', abrir);
+    if (abrir) { u.scrollIntoView({ behavior: 'smooth', block: 'center' }); var p = D.getElementById('pin'); if (p) setTimeout(function () { p.focus(); }, 400); }
+  });
   D.addEventListener('click', function (e) { if (editando() && e.target.closest && e.target.closest('.xarr')) { if (!e.target.closest('.xarr').isContentEditable) e.preventDefault(); e.stopPropagation(); } }, true);
 
   /* ---------- início ---------- */
