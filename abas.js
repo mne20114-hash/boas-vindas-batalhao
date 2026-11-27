@@ -16,6 +16,18 @@
     '.xab-foto{transition:opacity .25s}.xab-foto.xab-troca{opacity:.15}' +
     '.xmapa{position:relative;width:100%;line-height:0;border-radius:6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)}.xmapa img{width:100%;height:auto;display:block}' +
     '.xmapa svg{position:absolute;inset:0;width:100%;height:100%}' +
+    '.xm-cena{position:relative;transform-origin:0 0;transition:transform 1.3s cubic-bezier(.65,0,.25,1),filter 1.3s;will-change:transform}' +
+    '.xmapa.animando .xm-cena{filter:saturate(1.15) contrast(1.05)}' +
+    '.xm-rev{position:absolute;inset:0;background:#000 center/cover no-repeat;opacity:0;transform:scale(1.12);transition:opacity .7s ease,transform 2.4s cubic-bezier(.2,.6,.2,1);pointer-events:none}' +
+    '.xmapa.revelado .xm-rev{opacity:1;transform:scale(1)}' +
+    '.xm-rev::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45))}' +
+    '.xm-tit{position:absolute;left:0;right:0;bottom:0;padding:28px 16px 14px;line-height:1.2;color:#fff;font:700 18px Montserrat,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.6);background:linear-gradient(transparent,rgba(0,0,0,.55));opacity:0;transform:translateY(10px);transition:opacity .6s .35s,transform .6s .35s;pointer-events:none}' +
+    '.xmapa.revelado .xm-tit{opacity:1;transform:none}' +
+    '.xm-volta{position:absolute;top:10px;left:10px;line-height:1;padding:8px 12px;border:0;border-radius:999px;background:rgba(12,34,58,.8);color:#fff;font:600 13px Montserrat,sans-serif;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s .3s}' +
+    '.xmapa.revelado .xm-volta{opacity:1;pointer-events:auto}' +
+    '.xmapa polygon{display:none}body.edit .xmapa polygon{display:block;opacity:.9;fill:rgba(196,164,104,.25);stroke:#c4a468;stroke-dasharray:5 4;animation:none}' +
+    '.xab-mini{width:44px;height:34px;object-fit:cover;border-radius:4px}' +
+    '.xabas .xab-file{display:inline-block;padding:7px 11px;font:600 13px Montserrat,sans-serif;border:1px solid #0c223a;border-radius:999px;cursor:pointer;background:#fff}' +
     '.xmapa polygon{opacity:0;transition:opacity .35s;stroke-width:3;vector-effect:non-scaling-stroke;stroke-linejoin:round}' +
     '.xmapa polygon.on{opacity:1;animation:xneon 1.6s ease-in-out infinite alternate}' +
     '@keyframes xneon{from{stroke-width:2.5}to{stroke-width:4.5}}' +
@@ -97,89 +109,144 @@
       return fetch(SB + '/rest/v1/batalhao_config?id=eq.2', { method: 'PATCH', headers: h({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify({ data: data, updated_at: new Date().toISOString() }) });
     }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); location.reload(); }).catch(function (e) { alert('Não foi possível salvar: ' + e.message); });
   }
+  /* envia uma foto (reduzida) para o storage e devolve o endereço público */
+  function enviarFoto(file) {
+    return new Promise(function (ok, no) {
+      var im = new Image(), u = URL.createObjectURL(file);
+      im.onload = function () {
+        var f = Math.min(1, 1920 / Math.max(im.width, im.height)), cv = D.createElement('canvas');
+        cv.width = Math.round(im.width * f); cv.height = Math.round(im.height * f); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        HTMLCanvasElement.prototype.toBlob.call(cv, ok, 'image/jpeg', 0.85);
+      };
+      im.onerror = no; im.src = u;
+    }).then(function (b) {
+      var nome = 'area-' + Date.now().toString(36) + '.jpg';
+      return fetch(SB + '/storage/v1/object/batalhao/' + nome, { method: 'POST', headers: h({ 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }), body: b }).then(function (r) {
+        if (!r.ok) throw new Error('envio da foto (HTTP ' + r.status + ')');
+        return SB + '/storage/v1/object/public/batalhao/' + nome;
+      });
+    });
+  }
   function montarMapa(k, foto, fig, c) {
     c.areas = c.areas || [];
     foto.style.display = 'none';
     var NS = 'http://www.w3.org/2000/svg';
     var mapa = D.createElement('div'); mapa.className = 'xmapa'; mapa.setAttribute('contenteditable', 'false');
-    mapa.innerHTML = '<img alt="Vista aérea do batalhão" src="' + c.mapa.img + '" loading="lazy">';
-    var svg = D.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); mapa.appendChild(svg);
+    var cena = D.createElement('div'); cena.className = 'xm-cena';
+    cena.innerHTML = '<img alt="Vista aérea do batalhão" src="' + c.mapa.img + '">';
+    var svg = D.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); cena.appendChild(svg);
+    mapa.appendChild(cena);
+    var rev = D.createElement('div'); rev.className = 'xm-rev'; mapa.appendChild(rev);
+    var tit = D.createElement('div'); tit.className = 'xm-tit'; mapa.appendChild(tit);
+    var volta = D.createElement('button'); volta.type = 'button'; volta.className = 'xm-volta'; volta.textContent = '← Vista aérea'; mapa.appendChild(volta);
     var bar = D.createElement('div'); bar.className = 'xabas'; bar.setAttribute('contenteditable', 'false');
     var botoes = D.createElement('div'); botoes.style.cssText = 'display:contents'; bar.appendChild(botoes);
     var pan = D.createElement('div'); pan.className = 'xab-pan'; bar.appendChild(pan);
-    var atual = -1, polys = [], desenho = -1, pts = [], temp = null;
-    function cor(a, i) { return a.cor || NEON[i % NEON.length]; }
-    function pintar(pg, a, i) {
-      var cr = cor(a, i);
-      pg.setAttribute('points', (a.pts || []).map(function (p) { return p[0] + ',' + p[1]; }).join(' '));
-      pg.style.stroke = cr; pg.style.fill = rgba(cr, .28); pg.style.filter = 'drop-shadow(0 0 4px ' + cr + ') drop-shadow(0 0 10px ' + cr + ')';
+    var atual = -1, polys = [], desenho = -1, pts = [], temp = null, timers = [];
+    function limpaT() { timers.forEach(clearTimeout); timers = []; }
+    function depois(ms, fn) { timers.push(setTimeout(fn, ms)); }
+    function alvo(a) {
+      var p = a.pts || []; if (!p.length) return 'none';
+      var x0 = 100, y0 = 100, x1 = 0, y1 = 0;
+      p.forEach(function (q) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
+      var sc = Math.max(1.6, Math.min(5, 0.85 * Math.min(100 / Math.max(x1 - x0, 1), 100 / Math.max(y1 - y0, 1))));
+      var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      var tx = Math.max((1 - sc) * 100, Math.min(0, 50 - sc * cx)), ty = Math.max((1 - sc) * 100, Math.min(0, 50 - sc * cy));
+      return 'translate(' + tx + '%,' + ty + '%) scale(' + sc + ')';
     }
+    function mostrar(i) {
+      limpaT(); var a = c.areas[i];
+      var jaAberto = mapa.classList.contains('revelado');
+      mapa.classList.remove('revelado'); mapa.classList.add('animando');
+      depois(jaAberto ? 450 : 0, function () {
+        cena.style.transform = alvo(a);
+        depois(1300, function () {
+          rev.style.backgroundImage = a.foto ? 'url("' + a.foto + '")' : '';
+          tit.textContent = a.nome || '';
+          if (a.foto) mapa.classList.add('revelado');
+          mapa.classList.remove('animando');
+        });
+      });
+    }
+    function aerea() {
+      limpaT(); mapa.classList.remove('revelado');
+      depois(450, function () { cena.style.transform = ''; });
+    }
+    volta.onclick = function (e) { e.preventDefault(); e.stopPropagation(); sel(-1, true); };
     function sel(i, forcar) {
       atual = (!forcar && atual === i) ? -1 : i;
-      polys.forEach(function (p, j) { p.classList.toggle('on', j === atual); });
       [].forEach.call(botoes.children, function (b, j) { b.classList.toggle('on', j === atual); });
+      polys.forEach(function (p, j) { p.classList.toggle('on', j === atual); });
+      if (atual < 0) aerea(); else mostrar(atual);
     }
     function desenhar() {
       polys.forEach(function (p) { p.remove(); }); polys = []; botoes.innerHTML = '';
       c.areas.forEach(function (a, i) {
-        var pg = D.createElementNS(NS, 'polygon'); pintar(pg, a, i); svg.insertBefore(pg, temp); polys.push(pg);
-        var b = D.createElement('button'); b.type = 'button'; b.dataset.i = i;
-        b.innerHTML = '<span class="dot" style="background:' + cor(a, i) + ';color:' + cor(a, i) + '"></span>'; b.appendChild(D.createTextNode(a.nome || 'Sem nome'));
+        var pg = D.createElementNS(NS, 'polygon'); pg.setAttribute('points', (a.pts || []).map(function (p) { return p[0] + ',' + p[1]; }).join(' '));
+        svg.insertBefore(pg, temp); polys.push(pg);
+        var b = D.createElement('button'); b.type = 'button'; b.dataset.i = i; b.textContent = a.nome || 'Sem nome';
+        if (!a.foto) b.classList.add('vazio');
         b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); sel(i); };
         botoes.appendChild(b);
       });
-      sel(atual >= c.areas.length ? -1 : atual, true);
+      [].forEach.call(botoes.children, function (b, j) { b.classList.toggle('on', j === atual); });
     }
-    /* painel de edição: nome, cor, desenhar, excluir */
     function painel() {
-      pan.innerHTML = '<b>Áreas do mapa</b> <span>(só aparece no modo edição)</span>';
+      pan.innerHTML = '<b>Áreas da foto aérea</b> <span>(só aparece no modo edição)</span>';
       c.areas.forEach(function (a, i) {
         var row = D.createElement('div'); row.className = 'xab-row';
-        var ci = D.createElement('input'); ci.type = 'color'; ci.value = cor(a, i); ci.title = 'Cor da área';
-        ci.oninput = function () { a.cor = ci.value; desenhar(); sel(i, true); };
         var ni = D.createElement('input'); ni.type = 'text'; ni.value = a.nome || ''; ni.placeholder = 'Nome do botão';
-        ni.oninput = function () { a.nome = ni.value; desenhar(); sel(i, true); };
-        var bd = D.createElement('button'); bd.type = 'button'; bd.textContent = (a.pts && a.pts.length) ? '✏️ Redesenhar' : '✏️ Desenhar';
+        ni.oninput = function () { a.nome = ni.value; desenhar(); };
+        var bd = D.createElement('button'); bd.type = 'button'; bd.textContent = (a.pts && a.pts.length) ? '✏️ Remarcar área' : '✏️ Marcar área';
         bd.onclick = function (e) { e.preventDefault(); e.stopPropagation(); comecar(i); };
-        var bx = D.createElement('button'); bx.type = 'button'; bx.textContent = '🗑'; bx.title = 'Excluir esta área';
-        bx.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (!confirm('Excluir a área "' + (a.nome || 'Sem nome') + '"?')) return; c.areas.splice(i, 1); atual = -1; desenhar(); painel(); };
-        row.appendChild(ci); row.appendChild(ni); row.appendChild(bd); row.appendChild(bx); pan.appendChild(row);
+        var lf = D.createElement('label'); lf.className = 'xab-file'; lf.textContent = a.foto ? '🖼 Trocar foto' : '🖼 Escolher foto';
+        var fi = D.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.hidden = true; lf.appendChild(fi);
+        fi.onchange = function () {
+          if (!fi.files[0]) return; lf.firstChild.textContent = 'Enviando…';
+          enviarFoto(fi.files[0]).then(function (u) { a.foto = u; desenhar(); painel(); sel(i, true); }).catch(function (er) { alert('Erro: ' + er.message); painel(); });
+        };
+        var ver = D.createElement('button'); ver.type = 'button'; ver.textContent = '▶ Testar';
+        ver.onclick = function (e) { e.preventDefault(); e.stopPropagation(); sel(i, true); mapa.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+        var bx = D.createElement('button'); bx.type = 'button'; bx.textContent = '🗑'; bx.title = 'Excluir este botão';
+        bx.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (!confirm('Excluir o botão "' + (a.nome || 'Sem nome') + '"?')) return; c.areas.splice(i, 1); atual = -1; aerea(); desenhar(); painel(); };
+        if (a.foto) { var mini = D.createElement('img'); mini.src = a.foto; mini.className = 'xab-mini'; row.appendChild(mini); }
+        row.appendChild(ni); row.appendChild(bd); row.appendChild(lf); row.appendChild(ver); row.appendChild(bx); pan.appendChild(row);
       });
       var acoes = D.createElement('div'); acoes.className = 'xab-row';
-      var bn = D.createElement('button'); bn.type = 'button'; bn.textContent = '+ Nova área';
-      bn.onclick = function (e) { e.preventDefault(); e.stopPropagation(); var i = c.areas.length; c.areas.push({ nome: 'Nova área', cor: NEON[i % NEON.length], pts: [] }); desenhar(); painel(); comecar(i); };
-      var bs = D.createElement('button'); bs.type = 'button'; bs.className = 'xab-salvar'; bs.textContent = '💾 Salvar áreas';
-      bs.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (desenho >= 0) { alert('Conclua ou cancele o desenho antes de salvar.'); return; } bs.textContent = 'Salvando…'; salvarAbas(k, c); };
+      var bn = D.createElement('button'); bn.type = 'button'; bn.textContent = '+ Novo botão';
+      bn.onclick = function (e) { e.preventDefault(); e.stopPropagation(); c.areas.push({ nome: 'Nova área', pts: [] }); desenhar(); painel(); comecar(c.areas.length - 1); };
+      var bs = D.createElement('button'); bs.type = 'button'; bs.className = 'xab-salvar'; bs.textContent = '💾 Salvar botões';
+      bs.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (desenho >= 0) { alert('Conclua ou cancele a marcação antes de salvar.'); return; } bs.textContent = 'Salvando…'; salvarAbas(k, c); };
       acoes.appendChild(bn); acoes.appendChild(bs); pan.appendChild(acoes);
       var aviso = D.createElement('div'); aviso.className = 'xab-msg';
-      aviso.textContent = desenho >= 0 ? 'Clique na foto, ponto por ponto, em volta da área "' + (c.areas[desenho].nome || '') + '".' : 'Salve antes as outras alterações da página: ao salvar as áreas, a página recarrega.';
+      aviso.textContent = desenho >= 0 ? 'Clique na foto aérea, ponto por ponto, em volta da área "' + (c.areas[desenho].nome || '') + '". A câmera vai se aproximar dessa região.' : 'Salve antes as outras alterações da página: ao salvar os botões, a página recarrega.';
       pan.appendChild(aviso);
       if (desenho >= 0) {
         var r2 = D.createElement('div'); r2.className = 'xab-row';
-        var ok = D.createElement('button'); ok.type = 'button'; ok.className = 'xab-salvar'; ok.textContent = '✔ Concluir desenho';
-        ok.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (pts.length < 3) { alert('Marque pelo menos 3 pontos.'); return; } c.areas[desenho].pts = pts.map(function (p) { return [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100]; }); var i = desenho; parar(); sel(i, true); };
+        var ok = D.createElement('button'); ok.type = 'button'; ok.className = 'xab-salvar'; ok.textContent = '✔ Concluir marcação';
+        ok.onclick = function (e) { e.preventDefault(); e.stopPropagation(); if (pts.length < 3) { alert('Marque pelo menos 3 pontos.'); return; } c.areas[desenho].pts = pts.map(function (p) { return [Math.round(p[0] * 100) / 100, Math.round(p[1] * 100) / 100]; }); parar(); };
         var un = D.createElement('button'); un.type = 'button'; un.textContent = '↶ Desfazer ponto';
         un.onclick = function (e) { e.preventDefault(); e.stopPropagation(); pts.pop(); traco(); };
         var no = D.createElement('button'); no.type = 'button'; no.textContent = '✖ Cancelar';
-        no.onclick = function (e) { e.preventDefault(); e.stopPropagation(); var i = desenho; parar(); sel(i, true); };
+        no.onclick = function (e) { e.preventDefault(); e.stopPropagation(); parar(); };
         r2.appendChild(ok); r2.appendChild(un); r2.appendChild(no); pan.appendChild(r2);
       }
     }
     function traco() { if (temp) temp.setAttribute('points', pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' ')); }
     function comecar(i) {
-      parar(true); desenho = i; pts = []; sel(i, true); if (polys[i]) polys[i].classList.remove('on');
+      parar(true); atual = -1; limpaT(); mapa.classList.remove('revelado'); cena.style.transform = ''; [].forEach.call(botoes.children, function (b) { b.classList.remove('on'); });
+      desenho = i; pts = [];
       temp = D.createElementNS(NS, 'polygon'); temp.setAttribute('class', 'xdraw'); svg.appendChild(temp);
       mapa.classList.add('desenhando'); painel(); mapa.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     function parar(semPainel) { desenho = -1; pts = []; if (temp) temp.remove(); temp = null; mapa.classList.remove('desenhando'); desenhar(); if (!semPainel) painel(); }
     mapa.addEventListener('click', function (e) {
-      if (desenho < 0) return; e.preventDefault(); e.stopPropagation();
+      if (desenho < 0 || e.target === volta) return; e.preventDefault(); e.stopPropagation();
       var r = mapa.getBoundingClientRect(); pts.push([(e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100]); traco();
     }, true);
     fig.parentNode.insertBefore(mapa, fig.nextSibling); mapa.parentNode.insertBefore(bar, mapa.nextSibling);
     feitos[k] = { bar: bar, fig: fig, mapa: mapa };
     desenhar(); painel();
-    if (c.areas.length) sel(0, true);
     return true;
   }
   function posicionar() { for (var k in feitos) { var f = feitos[k], ult = f.fig; if (!f.fig.isConnected) continue; if (f.mapa) { if (ult.nextElementSibling !== f.mapa) ult.parentNode.insertBefore(f.mapa, ult.nextSibling); ult = f.mapa; } if (ult.nextElementSibling !== f.bar) ult.parentNode.insertBefore(f.bar, ult.nextSibling); } }
