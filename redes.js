@@ -76,3 +76,73 @@
   }
   iniciar();
 })();
+
+/* ===== Arrastar (modo edição): soldado, "Nos siga…" e @ do Instagram =====
+   Posições ficam num <i data-xpos> dentro do rodapé e são gravadas pelo botão Salvar do editor. */
+(function () {
+  var W = window, D = document;
+  if (W.__dragOk) return; W.__dragOk = 1;
+  var ALVOS = { xsold: '#xsold', rdt: '#xredes .rd-t', rdig: '#xredes .rd-ig' };
+  var css = D.createElement('style');
+  css.textContent =
+    '.xarr{position:relative;z-index:6}' +
+    'body.edit .xarr{cursor:move;outline:2px dashed #c4a468;outline-offset:4px;touch-action:none;user-select:none;-webkit-user-select:none}' +
+    'body.edit .xarr.xarrastando{outline-color:#0c223a;opacity:.85}' +
+    '.xarr-dica{display:none;text-align:center;font:12px Montserrat,sans-serif;color:#8a6d2f;margin:6px 0 0}body.edit .xarr-dica{display:block}';
+  D.head.appendChild(css);
+  function foot() { return D.querySelector('[data-t=rodape]'); }
+  function holder() {
+    var f = foot(); if (!f) return null;
+    var i = f.querySelector('i[data-xpos]');
+    if (!i) { i = D.createElement('i'); i.setAttribute('data-xpos', ''); i.hidden = true; i.textContent = '{}'; f.appendChild(i); }
+    return i;
+  }
+  function ler() { var i = holder(); try { return JSON.parse((i && i.textContent) || '{}') || {}; } catch (e) { return {}; } }
+  function modo() { return innerWidth < 768 ? 'cel' : 'pc'; }
+  function aplicar() {
+    var p = ler()[modo()] || {};
+    for (var k in ALVOS) { var el = D.querySelector(ALVOS[k]); if (!el) continue; el.classList.add('xarr'); el.dataset.arr = k; var v = p[k] || [0, 0]; el.style.translate = v[0] + 'px ' + v[1] + 'px'; }
+  }
+  function gravar(k, v) {
+    var t = ler(), m = modo(); t[m] = t[m] || {};
+    if (v) t[m][k] = v; else delete t[m][k];
+    holder().textContent = JSON.stringify(t);
+    var s = D.querySelector('#tb .st'); if (s) s.textContent = 'Alterado — clique em Salvar';
+  }
+  var drag = null;
+  D.addEventListener('pointerdown', function (e) {
+    if (!D.body.classList.contains('edit')) return;
+    var el = e.target.closest && e.target.closest('.xarr'); if (!el) return;
+    e.preventDefault(); e.stopPropagation();
+    var v = (el.style.translate || '0px 0px').split(' ').map(parseFloat);
+    drag = { el: el, x0: e.clientX, y0: e.clientY, bx: v[0] || 0, by: v[1] || 0, moveu: false };
+    el.classList.add('xarrastando'); try { el.setPointerCapture(e.pointerId); } catch (er) { }
+  }, true);
+  D.addEventListener('pointermove', function (e) {
+    if (!drag) return; e.preventDefault();
+    var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moveu = true;
+    drag.el.style.translate = Math.round(drag.bx + dx) + 'px ' + Math.round(drag.by + dy) + 'px';
+  }, true);
+  function soltar() {
+    if (!drag) return; var el = drag.el; el.classList.remove('xarrastando');
+    if (drag.moveu) { var v = el.style.translate.split(' ').map(parseFloat); gravar(el.dataset.arr, [v[0] || 0, v[1] || 0]); }
+    drag = null;
+  }
+  D.addEventListener('pointerup', soltar, true); D.addEventListener('pointercancel', soltar, true);
+  /* no modo edição, o link do Instagram não abre; duplo clique volta o item ao lugar original */
+  D.addEventListener('click', function (e) { if (D.body.classList.contains('edit') && e.target.closest && e.target.closest('.xarr')) { e.preventDefault(); e.stopPropagation(); } }, true);
+  D.addEventListener('dblclick', function (e) {
+    if (!D.body.classList.contains('edit')) return; var el = e.target.closest && e.target.closest('.xarr'); if (!el) return;
+    e.preventDefault(); el.style.translate = '0px 0px'; gravar(el.dataset.arr, null);
+  }, true);
+  var dica;
+  function iniciar(n) {
+    aplicar();
+    var box = D.getElementById('xredes');
+    if (box && !dica) { dica = D.createElement('p'); dica.className = 'xarr-dica'; dica.setAttribute('contenteditable', 'false'); dica.textContent = 'Arraste o soldado, o título e o @ para onde quiser (duplo clique volta ao lugar). Depois clique em Salvar. As posições do computador e do celular são separadas.'; box.appendChild(dica); }
+    if (n < 30 && (!D.querySelector('#xsold') || !box)) setTimeout(function () { iniciar(n + 1); }, 300);
+  }
+  iniciar(0);
+  var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(aplicar, 200); });
+  var re = W.__xre; W.__xre = function () { if (re) re.apply(this, arguments); setTimeout(aplicar, 50); };
+})();
