@@ -11,7 +11,10 @@
     '#xredes .rd-t{font-size:20px;font-weight:700;margin:0 0 12px;letter-spacing:.2px}' +
     '#xredes a.rd-ig{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid #e1e4e8;border-radius:999px;color:#0c223a;text-decoration:none;font-size:16px;font-weight:600;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06)}' +
     '#xredes a.rd-ig:hover{border-color:#d62976}' +
-    '#xredes .rd-lema{max-width:900px;margin:16px auto 0;text-align:right;font-size:17px;font-weight:700;font-style:italic;color:#0c223a}' +
+    '#xredes .rd-lema{box-sizing:border-box;width:250px;aspect-ratio:1000/680;margin:18px 4% 0 auto;padding:6% 13% 17%;display:flex;align-items:center;justify-content:center;text-align:center;' +
+    'background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%20220%201000%20680%22%3E%3Cpath%20d%3D%22M180%20773C90%20730%2015%20650%2015%20540C15%20370%20230%20235%20497%20235C765%20235%20980%20370%20980%20540C980%20712%20765%20850%20497%20850C420%20850%20345%20840%20280%20820C220%20855%20140%20878%2050%20880C115%20870%20155%20815%20180%20773Z%22%20fill%3D%22%23fff%22%20stroke%3D%22%23111%22%20stroke-width%3D%2214%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;filter:drop-shadow(0 4px 8px rgba(0,0,0,.15));' +
+    'font:800 17px/1.15 Montserrat,sans-serif;font-style:normal;text-transform:uppercase;letter-spacing:.2px;color:#0c223a}' +
+    '@media(max-width:767px){#xredes .rd-lema{width:200px;font-size:14px}}' +
     '#xredes .rd-ed{display:none;max-width:420px;margin:12px auto 0;padding:10px;border:2px dashed #c4a468;border-radius:8px;font-size:13px;text-align:left}' +
     'body.edit #xredes .rd-ed{display:block}' +
     '#xredes .rd-ed input{width:100%;box-sizing:border-box;padding:8px;margin:6px 0;border:1px solid #ccc;border-radius:4px;font:15px Montserrat,sans-serif}' +
