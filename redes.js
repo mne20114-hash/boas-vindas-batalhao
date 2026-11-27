@@ -11,6 +11,7 @@
     '#xredes .rd-t{font-size:20px;font-weight:700;margin:0 0 12px;letter-spacing:.2px}' +
     '#xredes a.rd-ig{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid #e1e4e8;border-radius:999px;color:#0c223a;text-decoration:none;font-size:16px;font-weight:600;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06)}' +
     '#xredes a.rd-ig:hover{border-color:#d62976}' +
+    '#xredes .rd-lema{max-width:900px;margin:16px auto 0;text-align:right;font-size:17px;font-weight:700;font-style:italic;color:#0c223a}' +
     '#xredes .rd-ed{display:none;max-width:420px;margin:12px auto 0;padding:10px;border:2px dashed #c4a468;border-radius:8px;font-size:13px;text-align:left}' +
     'body.edit #xredes .rd-ed{display:block}' +
     '#xredes .rd-ed input{width:100%;box-sizing:border-box;padding:8px;margin:6px 0;border:1px solid #ccc;border-radius:4px;font:15px Montserrat,sans-serif}' +
@@ -28,8 +29,9 @@
   }
   function montar(col) {
     box = D.createElement('div'); box.id = 'xredes'; box.setAttribute('contenteditable', 'false');
-    box.innerHTML = '<p class="rd-t">Nos siga nas redes sociais</p>' +
+    box.innerHTML = '<p class="rd-t">Nos acompanhe nas redes sociais</p>' +
       '<a class="rd-ig" target="_blank" rel="noopener">' + IG + '<span></span></a>' +
+      '<p class="rd-lema">Tropa forte que cumpre as missões</p>' +
       '<div class="rd-ed"><b>Instagram do batalhão</b><input type="text" placeholder="@usuario"><button type="button">Salvar @</button> <small>A página recarrega ao salvar.</small></div>';
     box.querySelector('.rd-ed button').onclick = function (e) {
       e.preventDefault(); var u = limpa(box.querySelector('.rd-ed input').value); this.textContent = 'Salvando…';
@@ -82,7 +84,8 @@
 (function () {
   var W = window, D = document;
   if (W.__dragOk) return; W.__dragOk = 1;
-  var ALVOS = { xsold: '#xsold', rdt: '#xredes .rd-t', rdig: '#xredes .rd-ig' };
+  var ALVOS = { xsold: '#xsold', rdt: '#xredes .rd-t', rdig: '#xredes .rd-ig', lema: '#xredes .rd-lema' };
+  var TEXTOS = { rdt: '#xredes .rd-t', lema: '#xredes .rd-lema' };
   var css = D.createElement('style');
   css.textContent =
     '.xarr{position:relative;z-index:6}' +
@@ -113,14 +116,21 @@
   D.addEventListener('pointerdown', function (e) {
     if (!D.body.classList.contains('edit')) return;
     var el = e.target.closest && e.target.closest('.xarr'); if (!el) return;
-    e.preventDefault(); e.stopPropagation();
+    var txt = el.isContentEditable;
+    if (!txt) e.preventDefault();
+    e.stopPropagation();
     var v = (el.style.translate || '0px 0px').split(' ').map(parseFloat);
-    drag = { el: el, x0: e.clientX, y0: e.clientY, bx: v[0] || 0, by: v[1] || 0, moveu: false };
-    el.classList.add('xarrastando'); try { el.setPointerCapture(e.pointerId); } catch (er) { }
+    drag = { el: el, x0: e.clientX, y0: e.clientY, bx: v[0] || 0, by: v[1] || 0, moveu: false, id: e.pointerId };
   }, true);
   D.addEventListener('pointermove', function (e) {
-    if (!drag) return; e.preventDefault();
-    var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moveu = true;
+    if (!drag) return;
+    var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    if (!drag.moveu) {
+      if (Math.abs(dx) + Math.abs(dy) < 6) return;
+      drag.moveu = true; drag.el.classList.add('xarrastando');
+      try { getSelection().removeAllRanges(); drag.el.blur(); drag.el.setPointerCapture(drag.id); } catch (er) { }
+    }
+    e.preventDefault();
     drag.el.style.translate = Math.round(drag.bx + dx) + 'px ' + Math.round(drag.by + dy) + 'px';
   }, true);
   function soltar() {
@@ -130,17 +140,31 @@
   }
   D.addEventListener('pointerup', soltar, true); D.addEventListener('pointercancel', soltar, true);
   /* no modo edição, o link do Instagram não abre; duplo clique volta o item ao lugar original */
-  D.addEventListener('click', function (e) { if (D.body.classList.contains('edit') && e.target.closest && e.target.closest('.xarr')) { e.preventDefault(); e.stopPropagation(); } }, true);
+  D.addEventListener('click', function (e) { if (D.body.classList.contains('edit') && e.target.closest && e.target.closest('.xarr')) { if (!e.target.closest('.xarr').isContentEditable) e.preventDefault(); e.stopPropagation(); } }, true);
   D.addEventListener('dblclick', function (e) {
-    if (!D.body.classList.contains('edit')) return; var el = e.target.closest && e.target.closest('.xarr'); if (!el) return;
+    if (!D.body.classList.contains('edit')) return; var el = e.target.closest && e.target.closest('.xarr'); if (!el || el.isContentEditable) return;
     e.preventDefault(); el.style.translate = '0px 0px'; gravar(el.dataset.arr, null);
   }, true);
+  /* textos editáveis: guardados no mesmo <i data-xpos>, em "txt" */
+  function textos() {
+    var t = ler().txt || {};
+    for (var k in TEXTOS) {
+      var el = D.querySelector(TEXTOS[k]); if (!el) continue;
+      if (t[k] != null && !el.__lido) el.innerHTML = t[k];
+      el.__lido = 1;
+      el.setAttribute('contenteditable', D.body.classList.contains('edit') ? 'true' : 'false');
+      if (!el.__ouve) { el.__ouve = 1; el.addEventListener('input', (function (kk, ee) { return function () { var a = ler(); a.txt = a.txt || {}; a.txt[kk] = ee.innerHTML; holder().textContent = JSON.stringify(a); var s = D.querySelector('#tb .st'); if (s) s.textContent = 'Alterado — clique em Salvar'; }; })(k, el)); }
+    }
+  }
+  new MutationObserver(textos).observe(D.body, { attributes: true, attributeFilter: ['class'] });
   var dica;
   function iniciar(n) {
-    aplicar();
+    aplicar(); textos();
     var box = D.getElementById('xredes');
-    if (box && !dica) { dica = D.createElement('p'); dica.className = 'xarr-dica'; dica.setAttribute('contenteditable', 'false'); dica.textContent = 'Arraste o soldado, o título e o @ para onde quiser (duplo clique volta ao lugar). Depois clique em Salvar. As posições do computador e do celular são separadas.'; box.appendChild(dica); }
-    if (n < 30 && (!D.querySelector('#xsold') || !box)) setTimeout(function () { iniciar(n + 1); }, 300);
+    if (box && !dica) { dica = D.createElement('p'); dica.className = 'xarr-dica'; dica.setAttribute('contenteditable', 'false'); dica.textContent = 'Arraste o soldado, os textos e o @ para onde quiser. Clique num texto para editar. Depois clique em Salvar. As posições do computador e do celular são separadas.'; var rz = D.createElement('button'); rz.type = 'button'; rz.textContent = '↺ Voltar tudo ao lugar original'; rz.style.cssText = 'display:block;margin:6px auto 0;padding:6px 12px;border:1px solid #c4a468;border-radius:4px;background:#fffaf0;color:#8a6d2f;cursor:pointer;font:12px Montserrat,sans-serif';
+      rz.onclick = function (e) { e.preventDefault(); e.stopPropagation(); for (var k in ALVOS) { var el = D.querySelector(ALVOS[k]); if (el) el.style.translate = '0px 0px'; gravar(k, null); } };
+      dica.appendChild(rz); box.appendChild(dica); }
+    if (n < 30 && (!D.querySelector('#xsold') || !box || !D.querySelector('#xredes .rd-lema'))) setTimeout(function () { iniciar(n + 1); }, 300);
   }
   iniciar(0);
   var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(aplicar, 200); });
