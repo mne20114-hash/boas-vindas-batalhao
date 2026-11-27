@@ -16,16 +16,17 @@
     '.xab-foto{transition:opacity .25s}.xab-foto.xab-troca{opacity:.15}' +
     '.xmapa{position:relative;width:100%;line-height:0;border-radius:6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.18)}.xmapa img{width:100%;height:auto;display:block}' +
     '.xmapa svg{position:absolute;inset:0;width:100%;height:100%}' +
-    '.xm-cena{position:relative;transform-origin:0 0;transition:transform 1.3s cubic-bezier(.65,0,.25,1),filter 1.3s;will-change:transform}' +
-    '.xmapa.animando .xm-cena{filter:saturate(1.15) contrast(1.05)}' +
-    '.xm-rev{position:absolute;inset:0;background:#000 center/cover no-repeat;opacity:0;transform:scale(1.12);transition:opacity .7s ease,transform 2.4s cubic-bezier(.2,.6,.2,1);pointer-events:none}' +
-    '.xmapa.revelado .xm-rev{opacity:1;transform:scale(1)}' +
-    '.xm-rev::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45))}' +
+    '.xmapa{background:#0c223a}.xm-cena{position:relative;transform-origin:0 0;transform:translate3d(0,0,0);transition:transform 1.3s cubic-bezier(.65,0,.25,1);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+    
+    '.xm-rev{position:absolute;inset:0;background:#0c223a;opacity:0;transform:translate3d(0,0,0) scale(1.12);transition:opacity .7s ease,transform 2.4s cubic-bezier(.2,.6,.2,1);pointer-events:none;overflow:hidden;-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+    '.xm-rev img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}' +
+    '.xmapa.revelado .xm-rev{opacity:1;transform:translate3d(0,0,0) scale(1)}' +
+    '.xm-rev::after{z-index:1;content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45))}' +
     '.xm-tit{position:absolute;left:0;right:0;bottom:0;padding:28px 16px 14px;line-height:1.2;color:#fff;font:700 18px Montserrat,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.6);background:linear-gradient(transparent,rgba(0,0,0,.55));opacity:0;transform:translateY(10px);transition:opacity .6s .35s,transform .6s .35s;pointer-events:none}' +
     '.xmapa.revelado .xm-tit{opacity:1;transform:none}' +
     '.xm-volta{position:absolute;top:10px;left:10px;line-height:1;padding:8px 12px;border:0;border-radius:999px;background:rgba(12,34,58,.8);color:#fff;font:600 13px Montserrat,sans-serif;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .4s .3s}' +
     '.xmapa.revelado .xm-volta{opacity:1;pointer-events:auto}' +
-    '.xmapa polygon{display:none}body.edit .xmapa polygon{display:block;opacity:.9;fill:rgba(196,164,104,.25);stroke:#c4a468;stroke-dasharray:5 4;animation:none}' +
+    '.xmapa svg{display:none}body.edit .xmapa svg{display:block}.xmapa polygon{display:none}body.edit .xmapa polygon{display:block;opacity:.9;fill:rgba(196,164,104,.25);stroke:#c4a468;stroke-dasharray:5 4;animation:none}' +
     '.xab-mini{width:44px;height:34px;object-fit:cover;border-radius:4px}' +
     '.xabas .xab-file{display:inline-block;padding:7px 11px;font:600 13px Montserrat,sans-serif;border:1px solid #0c223a;border-radius:999px;cursor:pointer;background:#fff}' +
     '.xmapa polygon{opacity:0;transition:opacity .35s;stroke-width:3;vector-effect:non-scaling-stroke;stroke-linejoin:round}' +
@@ -136,7 +137,10 @@
     cena.innerHTML = '<img alt="Vista aérea do batalhão" src="' + c.mapa.img + '">';
     var svg = D.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none'); cena.appendChild(svg);
     mapa.appendChild(cena);
-    var rev = D.createElement('div'); rev.className = 'xm-rev'; mapa.appendChild(rev);
+    var rev = D.createElement('div'); rev.className = 'xm-rev'; var revImg = D.createElement('img'); revImg.alt = ''; revImg.decoding = 'async'; rev.appendChild(revImg); mapa.appendChild(rev);
+    var cache = {};
+    function carregar(u) { if (!u) return Promise.resolve(); if (!cache[u]) { var im = new Image(); im.decoding = 'async'; cache[u] = new Promise(function (ok) { im.onload = im.onerror = function () { (im.decode ? im.decode() : Promise.resolve()).then(ok, ok); }; im.src = u; }); } return cache[u]; }
+    setTimeout(function () { c.areas.forEach(function (a) { carregar(a.foto); }); }, 1500);
     var tit = D.createElement('div'); tit.className = 'xm-tit'; mapa.appendChild(tit);
     var volta = D.createElement('button'); volta.type = 'button'; volta.className = 'xm-volta'; volta.textContent = '← Vista aérea'; mapa.appendChild(volta);
     var bar = D.createElement('div'); bar.className = 'xabas'; bar.setAttribute('contenteditable', 'false');
@@ -149,27 +153,31 @@
       var p = a.pts || []; if (!p.length) return 'none';
       var x0 = 100, y0 = 100, x1 = 0, y1 = 0;
       p.forEach(function (q) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
-      var sc = Math.max(1.6, Math.min(5, 0.85 * Math.min(100 / Math.max(x1 - x0, 1), 100 / Math.max(y1 - y0, 1))));
+      var maxZ = innerWidth < 768 ? 2.6 : 4.5;
+      var sc = Math.max(1.5, Math.min(maxZ, 0.85 * Math.min(100 / Math.max(x1 - x0, 1), 100 / Math.max(y1 - y0, 1))));
       var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
       var tx = Math.max((1 - sc) * 100, Math.min(0, 50 - sc * cx)), ty = Math.max((1 - sc) * 100, Math.min(0, 50 - sc * cy));
-      return 'translate(' + tx + '%,' + ty + '%) scale(' + sc + ')';
+      return 'translate3d(' + tx + '%,' + ty + '%,0) scale(' + sc + ')';
     }
     function mostrar(i) {
-      limpaT(); var a = c.areas[i];
+      limpaT(); var a = c.areas[i], vez = {}; mostrar.vez = vez;
       var jaAberto = mapa.classList.contains('revelado');
-      mapa.classList.remove('revelado'); mapa.classList.add('animando');
+      mapa.classList.remove('revelado');
+      var pronto = carregar(a.foto);
       depois(jaAberto ? 450 : 0, function () {
         cena.style.transform = alvo(a);
-        depois(1300, function () {
-          rev.style.backgroundImage = a.foto ? 'url("' + a.foto + '")' : '';
+        var fimZoom = new Promise(function (ok) { depois(1300, ok); });
+        Promise.all([pronto, fimZoom]).then(function () {
+          if (mostrar.vez !== vez) return;
           tit.textContent = a.nome || '';
-          if (a.foto) mapa.classList.add('revelado');
-          mapa.classList.remove('animando');
+          if (!a.foto) return;
+          revImg.src = a.foto;
+          requestAnimationFrame(function () { requestAnimationFrame(function () { if (mostrar.vez === vez) mapa.classList.add('revelado'); }); });
         });
       });
     }
     function aerea() {
-      limpaT(); mapa.classList.remove('revelado');
+      limpaT(); mostrar.vez = null; mapa.classList.remove('revelado');
       depois(450, function () { cena.style.transform = ''; });
     }
     volta.onclick = function (e) { e.preventDefault(); e.stopPropagation(); sel(-1, true); };
