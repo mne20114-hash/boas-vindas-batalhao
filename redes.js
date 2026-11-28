@@ -20,6 +20,10 @@
     'background:url("' + BALAO + '") center/100% 100% no-repeat;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));font:800 max(9px,1.7cqw)/1.15 Montserrat,sans-serif;text-transform:uppercase;color:#0c223a;margin:0}' +
     '#xrd-ig{position:absolute;left:56%;top:36%;display:inline-flex;align-items:center;gap:.5em;padding:.55em 1em;border-radius:999px;background:#fff;color:#0c223a;text-decoration:none;font:600 max(10px,1.5cqw) Montserrat,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap}' +
     '#xrd-lema{position:absolute;right:3%;bottom:5%;max-width:40cqw;margin:0;text-align:right;font:700 max(10px,2cqw)/1.2 Montserrat,sans-serif;font-style:italic!important;color:#0c223a;text-shadow:0 0 6px #fff,0 0 12px #fff}' +
+    '#xlike{position:absolute;left:3%;bottom:5%;display:inline-flex;align-items:center;gap:.45em;padding:.5em .95em;border:0;border-radius:999px;background:#fff;color:#0c223a;font:700 max(11px,1.5cqw) Montserrat,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.22);cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+    '#xlike svg{width:1.35em;height:1.35em;transition:transform .2s}#xlike svg path{fill:none;stroke:#d62940;stroke-width:2.2}' +
+    '#xlike.on svg path{fill:#e0245e;stroke:#e0245e}#xlike.pulo svg{animation:xpulo .45s ease}' +
+    '@keyframes xpulo{0%{transform:scale(1)}35%{transform:scale(1.45)}70%{transform:scale(.9)}100%{transform:scale(1)}}' +
     '#xredes{display:none;text-align:center;padding:8px 0 20px;font-family:Montserrat,sans-serif;color:#0c223a}body.edit #xredes{display:block}' +
     '#xredes .rd-ed{max-width:520px;margin:0 auto;padding:10px;border:2px dashed #c4a468;border-radius:8px;font-size:13px;text-align:left;background:#fffaf0}' +
     '#xredes .rd-ed input{width:100%;box-sizing:border-box;padding:8px;margin:6px 0;border:1px solid #ccc;border-radius:4px;font:15px Montserrat,sans-serif}' +
@@ -48,7 +52,7 @@
   function editando() { return D.body.classList.contains('edit'); }
 
   /* ---------- montagem ---------- */
-  var cena, rdt, rdig, lema, box, usuario = '';
+  var cena, rdt, rdig, lema, like, box, usuario = '';
   function limpa(u) { return (u || '').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/[\/?#].*$/, ''); }
   function montar(sec, col) {
     sec.classList.add('xsold');
@@ -56,9 +60,10 @@
     cena.innerHTML = '<img alt="Soldado do Exército Brasileiro no museu do batalhão, fazendo sinal de positivo" src="' + IMG + '" decoding="async">' +
       '<p id="xrd-t">Nos acompanhe nas redes sociais</p>' +
       '<a id="xrd-ig" target="_blank" rel="noopener">' + IG + '<span></span></a>' +
-      '<p id="xrd-lema">Tropa forte que cumpre as missões</p>';
+      '<p id="xrd-lema">Tropa forte que cumpre as missões</p>' +
+      '<button type="button" id="xlike" aria-pressed="false" aria-label="Curtir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.2 5 3 1.4-1.8 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg><span>Curtir</span></button>';
     sec.appendChild(cena);
-    rdt = D.getElementById('xrd-t'); rdig = D.getElementById('xrd-ig'); lema = D.getElementById('xrd-lema');
+    rdt = D.getElementById('xrd-t'); rdig = D.getElementById('xrd-ig'); lema = D.getElementById('xrd-lema'); like = D.getElementById('xlike'); curtidas();
     box = D.createElement('div'); box.id = 'xredes'; box.setAttribute('contenteditable', 'false');
     box.innerHTML = '<div class="rd-ed"><b>Instagram do batalhão</b><input type="text" placeholder="@usuario"><button type="button">Salvar @</button> <small>A página recarrega ao salvar.</small></div>';
     box.querySelector('button').onclick = function (e) {
@@ -79,8 +84,8 @@
   }
 
   /* ---------- posições, tamanhos e textos ---------- */
-  var ALVOS = { cena: function () { return cena; }, rdt: function () { return rdt; }, rdig: function () { return rdig; }, lema: function () { return lema; } };
-  var TAM = { cena: { nome: 'Imagem', fs: false }, rdt: { nome: 'Balão', fs: true }, rdig: { nome: '@ Instagram', fs: true, semW: true }, lema: { nome: 'Tropa forte…', fs: true } };
+  var ALVOS = { cena: function () { return cena; }, rdt: function () { return rdt; }, rdig: function () { return rdig; }, lema: function () { return lema; }, like: function () { return like; } };
+  var TAM = { cena: { nome: 'Imagem', fs: false }, rdt: { nome: 'Balão', fs: true }, rdig: { nome: '@ Instagram', fs: true, semW: true }, lema: { nome: 'Tropa forte…', fs: true }, like: { nome: 'Curtir', fs: true, semW: true } };
   var TEXTOS = { rdt: function () { return rdt; }, lema: function () { return lema; } };
   function aplicar() {
     if (!cena) return;
@@ -120,7 +125,7 @@
   }
   function painel() {
     var d = D.createElement('div'); d.style.cssText = 'max-width:620px;margin:12px auto 0;padding:10px;border:2px dashed #c4a468;border-radius:8px;background:#fffaf0;font:12px Montserrat,sans-serif;color:#0c223a';
-    d.innerHTML = '<b>Imagem e textos</b><br>Arraste a imagem, o balão, o @ e a frase para onde quiser. Clique num texto para editar. Depois clique em Salvar. Computador e celular são ajustados separadamente.';
+    d.innerHTML = '<b>Imagem e textos</b><br>Arraste a imagem, o balão, o @, a frase e o botão Curtir para onde quiser. Clique num texto para editar. Depois clique em Salvar. Computador e celular são ajustados separadamente.';
     var g = D.createElement('div'); g.style.cssText = 'margin-top:8px;display:grid;gap:6px;justify-content:center';
     for (var k in TAM) (function (k) {
       var r = D.createElement('div'); r.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:4px;justify-content:center';
@@ -136,6 +141,28 @@
     rz.style.cssText = 'display:block;margin:8px auto 0;padding:6px 12px;border:1px solid #c4a468;border-radius:4px;background:#fff;color:#8a6d2f;cursor:pointer;font:12px Montserrat,sans-serif';
     rz.onclick = function (e) { e.preventDefault(); e.stopPropagation(); var t = ler(), m = modo(); delete t[m]; if (t.tam) delete t.tam[m]; escrever(t); aplicar(); };
     d.appendChild(rz); box.appendChild(d);
+  }
+
+  /* ---------- curtidas (1 por aparelho) ---------- */
+  function aparelho() { var id; try { id = localStorage.getItem('x35dev'); if (!id) { id = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('x35dev', id); } } catch (e) { id = id || ('s' + Math.random().toString(36).slice(2, 12)); } return id.slice(0, 40); }
+  var euCurti = false, totalCurt = 0;
+  function mostraLike() {
+    if (!like) return;
+    like.classList.toggle('on', euCurti); like.setAttribute('aria-pressed', euCurti ? 'true' : 'false');
+    like.querySelector('span').textContent = totalCurt ? totalCurt.toLocaleString('pt-BR') + (totalCurt === 1 ? ' curtida' : ' curtidas') : 'Curtir';
+    like.setAttribute('aria-label', (euCurti ? 'Descurtir' : 'Curtir') + ' (' + totalCurt + ')');
+  }
+  function curtidas() {
+    mostraLike();
+    fetch(SB + '/rest/v1/rpc/batalhao_curtidas_info', { method: 'POST', headers: h({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_aparelho: aparelho() }) })
+      .then(function (r) { return r.json(); }).then(function (v) { totalCurt = +v.total || 0; euCurti = !!v.eu; mostraLike(); }).catch(function () { });
+    like.addEventListener('click', function (e) {
+      if (editando()) return; e.preventDefault();
+      euCurti = !euCurti; totalCurt = Math.max(0, totalCurt + (euCurti ? 1 : -1)); mostraLike();
+      if (euCurti) { like.classList.remove('pulo'); void like.offsetWidth; like.classList.add('pulo'); }
+      fetch(SB + '/rest/v1/rpc/batalhao_curtir', { method: 'POST', headers: h({ 'Content-Type': 'application/json' }), body: JSON.stringify({ p_aparelho: aparelho(), p_curtir: euCurti }) })
+        .then(function (r) { return r.json(); }).then(function (n) { if (typeof n === 'number') { totalCurt = n; mostraLike(); } }).catch(function () { });
+    });
   }
 
   /* ---------- arrastar ---------- */
@@ -219,12 +246,12 @@
       box.insertBefore(painel, box.firstChild);
     }
     painel.style.display = ''; painel.textContent = 'Carregando visualizações…';
-    fetch(SB + '/rest/v1/rpc/batalhao_visitas_resumo', { method: 'POST', headers: H, body: '{}' }).then(function (r) { return r.json(); }).then(function (v) {
+    Promise.all([fetch(SB + '/rest/v1/rpc/batalhao_visitas_resumo', { method: 'POST', headers: H, body: '{}' }).then(function (r) { return r.json(); }), fetch(SB + '/rest/v1/rpc/batalhao_curtidas_info', { method: 'POST', headers: H, body: '{"p_aparelho":"admin-x"}' }).then(function (r) { return r.json(); }).catch(function () { return {}; })]).then(function (rs) { var v = rs[0]; v.curt = rs[1].total; v.curtHoje = rs[1].hoje;
       function n(x) { return Number(x || 0).toLocaleString('pt-BR'); }
       var desde = v.desde ? new Date(v.desde).toLocaleDateString('pt-BR') : 'hoje';
       painel.innerHTML = '<b style="font-size:15px">📊 Visualizações do site</b>' +
         '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px">' +
-        [['Total', v.total], ['Hoje', v.hoje], ['Últimos 7 dias', v.semana], ['Pessoas (aparelhos)', v.aparelhos], ['Pessoas pelo celular', v.pessoas_celular], ['Pessoas pelo computador', v.pessoas_computador]].map(function (c) {
+        [['Total', v.total], ['Hoje', v.hoje], ['Últimos 7 dias', v.semana], ['Pessoas (aparelhos)', v.aparelhos], ['Pessoas pelo celular', v.pessoas_celular], ['Pessoas pelo computador', v.pessoas_computador], ['❤ Curtidas', v.curt], ['❤ Curtidas hoje', v.curtHoje]].map(function (c) {
           return '<div style="min-width:96px;padding:8px;border-radius:6px;background:#f4f6f8"><div style="font-size:20px;font-weight:800">' + n(c[1]) + '</div><div style="font-size:11px;color:#555">' + c[0] + '</div></div>';
         }).join('') + '</div><div style="margin-top:6px;font-size:11px;color:#777">Contando desde ' + desde + '. Cada visita conta 1 vez; as suas como administrador não entram.</div>';
     }).catch(function () { painel.textContent = 'Não foi possível carregar as visualizações.'; });
