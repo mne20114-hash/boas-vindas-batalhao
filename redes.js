@@ -21,8 +21,8 @@
     '#xrd-ig{position:absolute;left:56%;top:36%;display:inline-flex;align-items:center;gap:.5em;padding:.55em 1em;border-radius:999px;background:#fff;color:#0c223a;text-decoration:none;font:600 max(10px,1.5cqw) Montserrat,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap}' +
     '#xrd-lema{position:absolute;right:3%;bottom:5%;max-width:40cqw;margin:0;text-align:right;font:700 max(10px,2cqw)/1.2 Montserrat,sans-serif;font-style:italic!important;color:#0c223a;text-shadow:0 0 6px #fff,0 0 12px #fff}' +
     '#xlike{position:absolute;left:3%;bottom:5%;display:inline-flex;align-items:center;gap:.45em;padding:.5em .95em;border:0;border-radius:999px;background:#fff;color:#0c223a;font:700 max(11px,1.5cqw) Montserrat,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.22);cursor:pointer;-webkit-tap-highlight-color:transparent}' +
-    '#xlike svg{width:1.35em;height:1.35em;transition:transform .2s}#xlike svg path{fill:none;stroke:#d62940;stroke-width:2.2}' +
-    '#xlike.on svg path{fill:#e0245e;stroke:#e0245e}#xlike.pulo svg{animation:xpulo .45s ease}' +
+    '#xlike svg{width:1.35em;height:1.35em;transition:transform .2s}#xlike svg path{fill:none;stroke:#1565c0;stroke-width:1.8;stroke-linejoin:round}' +
+    '#xlike.on svg path{fill:#1877f2;stroke:#1877f2}#xlike.on{color:#1877f2}#xlike.pulo svg{animation:xpulo .45s ease}' +
     '@keyframes xpulo{0%{transform:scale(1)}35%{transform:scale(1.45)}70%{transform:scale(.9)}100%{transform:scale(1)}}' +
     '#xredes{display:none;text-align:center;padding:8px 0 20px;font-family:Montserrat,sans-serif;color:#0c223a}body.edit #xredes{display:block}' +
     '#xredes .rd-ed{max-width:520px;margin:0 auto;padding:10px;border:2px dashed #c4a468;border-radius:8px;font-size:13px;text-align:left;background:#fffaf0}' +
@@ -61,7 +61,7 @@
       '<p id="xrd-t">Nos acompanhe nas redes sociais</p>' +
       '<a id="xrd-ig" target="_blank" rel="noopener">' + IG + '<span></span></a>' +
       '<p id="xrd-lema">Tropa forte que cumpre as missões</p>' +
-      '<button type="button" id="xlike" aria-pressed="false" aria-label="Curtir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.2 5 3 1.4-1.8 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg><span>Curtir</span></button>';
+      '<button type="button" id="xlike" aria-pressed="false" aria-label="Curtir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v11H3.5A1.5 1.5 0 0 1 2 19.5v-8A1.5 1.5 0 0 1 3.5 10H7zm2 11h8.3a2 2 0 0 0 2-1.6l1.6-7.5A2 2 0 0 0 18.9 9.5H14l.8-3.9A2 2 0 0 0 12.9 3.2L9 10v11z"/></svg><span>Curtir</span></button>';
     sec.appendChild(cena);
     rdt = D.getElementById('xrd-t'); rdig = D.getElementById('xrd-ig'); lema = D.getElementById('xrd-lema'); like = D.getElementById('xlike'); curtidas();
     box = D.createElement('div'); box.id = 'xredes'; box.setAttribute('contenteditable', 'false');
@@ -251,7 +251,7 @@
       var desde = v.desde ? new Date(v.desde).toLocaleDateString('pt-BR') : 'hoje';
       painel.innerHTML = '<b style="font-size:15px">📊 Visualizações do site</b>' +
         '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px">' +
-        [['Total', v.total], ['Hoje', v.hoje], ['Últimos 7 dias', v.semana], ['Pessoas (aparelhos)', v.aparelhos], ['Pessoas pelo celular', v.pessoas_celular], ['Pessoas pelo computador', v.pessoas_computador], ['❤ Curtidas', v.curt], ['❤ Curtidas hoje', v.curtHoje]].map(function (c) {
+        [['Total', v.total], ['Hoje', v.hoje], ['Últimos 7 dias', v.semana], ['Pessoas (aparelhos)', v.aparelhos], ['Pessoas pelo celular', v.pessoas_celular], ['Pessoas pelo computador', v.pessoas_computador], ['👍 Curtidas', v.curt], ['👍 Curtidas hoje', v.curtHoje]].map(function (c) {
           return '<div style="min-width:96px;padding:8px;border-radius:6px;background:#f4f6f8"><div style="font-size:20px;font-weight:800">' + n(c[1]) + '</div><div style="font-size:11px;color:#555">' + c[0] + '</div></div>';
         }).join('') + '</div><div style="margin-top:6px;font-size:11px;color:#777">Contando desde ' + desde + '. Cada visita conta 1 vez; as suas como administrador não entram.</div>';
     }).catch(function () { painel.textContent = 'Não foi possível carregar as visualizações.'; });
