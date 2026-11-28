@@ -224,7 +224,7 @@
       var desde = v.desde ? new Date(v.desde).toLocaleDateString('pt-BR') : 'hoje';
       painel.innerHTML = '<b style="font-size:15px">📊 Visualizações do site</b>' +
         '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px">' +
-        [['Total', v.total], ['Hoje', v.hoje], ['Últimos 7 dias', v.semana], ['Pessoas (aparelhos)', v.aparelhos], ['Pelo celular', v.celular]].map(function (c) {
+        [['Total', v.total], ['Hoje', v.hoje], ['Últimos 7 dias', v.semana], ['Pessoas (aparelhos)', v.aparelhos], ['Pessoas pelo celular', v.pessoas_celular], ['Pessoas pelo computador', v.pessoas_computador]].map(function (c) {
           return '<div style="min-width:96px;padding:8px;border-radius:6px;background:#f4f6f8"><div style="font-size:20px;font-weight:800">' + n(c[1]) + '</div><div style="font-size:11px;color:#555">' + c[0] + '</div></div>';
         }).join('') + '</div><div style="margin-top:6px;font-size:11px;color:#777">Contando desde ' + desde + '. Cada visita conta 1 vez; as suas como administrador não entram.</div>';
     }).catch(function () { painel.textContent = 'Não foi possível carregar as visualizações.'; });
