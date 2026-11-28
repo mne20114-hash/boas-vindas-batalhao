@@ -258,3 +258,75 @@
   }
   new MutationObserver(mostrar).observe(D.body, { attributes: true, attributeFilter: ['class'] });
 })();
+
+/* ===== Caixa suspensa: nome/posto e "já é do 35º BI ou vai chegar?" (tabela batalhao_recados) ===== */
+(function () {
+  var W = window, D = document;
+  if (W.__recOk) return; W.__recOk = 1;
+  var SB = 'https://nhghjpsnggwhdgfkpnyv.supabase.co', KEY = 'sb_publishable_SOwPUUbWLOE_FeptNt3x1Q_EQ7r6imL';
+  var H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  var css = D.createElement('style');
+  css.textContent =
+    '#xrec{position:fixed;left:50%;bottom:16px;z-index:9000;width:min(380px,calc(100% - 24px));transform:translate(-50%,140%);opacity:0;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s;' +
+    'background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);border:1px solid rgba(255,255,255,.7);border-radius:16px;box-shadow:0 12px 36px rgba(0,0,0,.25);padding:16px 16px 14px;font:14px Montserrat,sans-serif;color:#0c223a}' +
+    '#xrec.on{transform:translate(-50%,0);opacity:1}' +
+    '#xrec .rc-x{position:absolute;top:6px;right:8px;border:0;background:none;font-size:20px;line-height:1;color:#0c223a;cursor:pointer;padding:4px}' +
+    '#xrec label.rc-l{display:block;font-weight:700;margin:2px 0 6px}' +
+    '#xrec input[type=text]{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid rgba(12,34,58,.25);border-radius:8px;background:rgba(255,255,255,.85);font:15px Montserrat,sans-serif;color:#0c223a}' +
+    '#xrec .rc-op{display:flex;gap:8px;margin-top:6px}#xrec .rc-op label{flex:1;display:flex;align-items:center;gap:6px;padding:9px 10px;border:1px solid rgba(12,34,58,.25);border-radius:8px;background:rgba(255,255,255,.7);cursor:pointer;font-weight:600}' +
+    '#xrec .rc-op input{accent-color:#0c223a;width:17px;height:17px;margin:0}' +
+    '#xrec .rc-b{display:flex;gap:8px;margin-top:12px}#xrec .rc-b button{flex:1;padding:10px;border-radius:8px;font:700 14px Montserrat,sans-serif;cursor:pointer}' +
+    '#xrec .rc-env{border:0;background:#0c223a;color:#fff}#xrec .rc-nao{border:1px solid rgba(12,34,58,.3);background:transparent;color:#0c223a}' +
+    '#xrec small{display:block;margin-top:8px;font-size:11px;color:#3d4b55}#xrec .rc-msg{color:#b3261e;font-size:12px;margin-top:6px;min-height:0}';
+  D.head.appendChild(css);
+  function abrir() {
+    if (ls('x35rec') === 'ok' || ls('x35adm') || D.body.classList.contains('edit')) return;
+    var adiado = +ls('x35rec') || 0; if (adiado && Date.now() < adiado) return;
+    var b = D.createElement('div'); b.id = 'xrec'; b.setAttribute('role', 'dialog'); b.setAttribute('aria-label', 'Identificação opcional'); b.setAttribute('contenteditable', 'false');
+    b.innerHTML = '<button type="button" class="rc-x" aria-label="Fechar">×</button>' +
+      '<label class="rc-l" for="xrec-n">Deixe seu nome e posto/graduação</label><input type="text" id="xrec-n" maxlength="120" placeholder="Ex.: 3º Sgt Silva" autocomplete="name">' +
+      '<label class="rc-l" style="margin-top:10px">Já é do 35º BI ou vai chegar?</label>' +
+      '<div class="rc-op"><label><input type="radio" name="xrec-s" value="ja_sou"> Já sou</label><label><input type="radio" name="xrec-s" value="vou_chegar"> Vou chegar</label></div>' +
+      '<div class="rc-msg"></div><div class="rc-b"><button type="button" class="rc-nao">Agora não</button><button type="button" class="rc-env">Enviar</button></div>' +
+      '<small>Opcional. Usado apenas pelo 35º BI para conhecer quem acessa a página.</small>';
+    D.body.appendChild(b);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { b.classList.add('on'); }); });
+    function fechar(adiar) { if (adiar) ls('x35rec', String(Date.now() + 5 * 864e5)); b.classList.remove('on'); setTimeout(function () { b.remove(); }, 500); }
+    b.querySelector('.rc-x').onclick = function () { fechar(true); };
+    b.querySelector('.rc-nao').onclick = function () { fechar(true); };
+    b.querySelector('.rc-env').onclick = function () {
+      var nome = b.querySelector('#xrec-n').value.trim(), s = b.querySelector('input[name=xrec-s]:checked'), msg = b.querySelector('.rc-msg');
+      if (nome.length < 2) { msg.textContent = 'Escreva seu nome e posto/graduação.'; b.querySelector('#xrec-n').focus(); return; }
+      if (!s) { msg.textContent = 'Marque se já é do 35º BI ou se vai chegar.'; return; }
+      var bt = this; bt.disabled = true; bt.textContent = 'Enviando…'; msg.textContent = '';
+      fetch(SB + '/rest/v1/batalhao_recados', { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, H), body: JSON.stringify({ nome: nome.slice(0, 120), situacao: s.value, aparelho: (ls('x35dev') || '').slice(0, 40) || null }) })
+        .then(function (r) {
+          if (!r.ok) throw new Error();
+          ls('x35rec', 'ok');
+          b.innerHTML = '<div style="text-align:center;padding:10px 4px;font-weight:700">Obrigado! Seja bem-vindo(a) ao 35º BI. 🇧🇷</div>';
+          setTimeout(function () { fechar(false); }, 2200);
+        }).catch(function () { bt.disabled = false; bt.textContent = 'Enviar'; msg.textContent = 'Não foi possível enviar. Tente de novo.'; });
+    };
+  }
+  setTimeout(abrir, 6000);
+
+  /* lista para o administrador (modo edição) */
+  var lista;
+  function mostrarLista() {
+    if (!D.body.classList.contains('edit')) { if (lista) lista.style.display = 'none'; return; }
+    var box = D.getElementById('xredes'); if (!box) return;
+    if (!lista) { lista = D.createElement('div'); lista.setAttribute('contenteditable', 'false'); lista.style.cssText = 'max-width:620px;margin:0 auto 12px;padding:12px;border:2px solid #0c223a;border-radius:8px;background:#fff;font:13px Montserrat,sans-serif;color:#0c223a;text-align:left'; box.insertBefore(lista, box.children[1] || null); }
+    lista.style.display = ''; lista.textContent = 'Carregando quem se identificou…';
+    var pin = (D.getElementById('pin') || {}).value || '';
+    fetch(SB + '/rest/v1/rpc/batalhao_recados_lista', { method: 'POST', headers: H, body: JSON.stringify({ p_pin: pin }) }).then(function (r) { if (!r.ok) throw new Error(); return r.json(); }).then(function (v) {
+      function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+      var linhas = (v.itens || []).map(function (i) {
+        return '<tr><td style="padding:5px 6px;border-top:1px solid #eee">' + esc(i.nome) + '</td><td style="padding:5px 6px;border-top:1px solid #eee;white-space:nowrap">' + (i.situacao === 'ja_sou' ? 'Já é do 35º BI' : 'Vai chegar') + '</td><td style="padding:5px 6px;border-top:1px solid #eee;white-space:nowrap;color:#666">' + new Date(i.criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + '</td></tr>';
+      }).join('');
+      lista.innerHTML = '<b style="font-size:15px">🪪 Quem se identificou</b> <span style="color:#666">(' + v.total + ' no total · ' + v.ja_sou + ' já são do 35º BI · ' + v.vou_chegar + ' vão chegar)</span>' +
+        (linhas ? '<div style="max-height:320px;overflow:auto;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:5px 6px">Nome e posto/graduação</th><th style="text-align:left;padding:5px 6px">Situação</th><th style="text-align:left;padding:5px 6px">Data</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' : '<div style="margin-top:6px;color:#666">Ninguém se identificou ainda.</div>');
+    }).catch(function () { lista.textContent = 'Para ver a lista, entre no modo edição pelo campo da senha desta página.'; });
+  }
+  new MutationObserver(mostrarLista).observe(D.body, { attributes: true, attributeFilter: ['class'] });
+})();
