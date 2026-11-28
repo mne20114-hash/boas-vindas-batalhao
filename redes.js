@@ -190,3 +190,44 @@
   var tr; addEventListener('resize', function () { clearTimeout(tr); tr = setTimeout(aplicar, 200); });
   var re = W.__xre; W.__xre = function () { if (re) re.apply(this, arguments); setTimeout(aplicar, 50); };
 })();
+
+/* ===== Contador de visualizações (tabela batalhao_visitas) ===== */
+(function () {
+  var W = window, D = document;
+  if (W.__visOk) return; W.__visOk = 1;
+  var SB = 'https://nhghjpsnggwhdgfkpnyv.supabase.co', KEY = 'sb_publishable_SOwPUUbWLOE_FeptNt3x1Q_EQ7r6imL';
+  var H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  function ss(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); sessionStorage.setItem(k, v); } catch (e) { return null; } }
+  /* registra 1 visualização por visita (aba aberta); não conta o administrador */
+  function registrar() {
+    if (ss('x35vis') || ls('x35adm') || D.body.classList.contains('edit')) return;
+    ss('x35vis', '1');
+    var id = ls('x35dev'); if (!id) { id = Math.random().toString(36).slice(2) + Date.now().toString(36); ls('x35dev', id); }
+    fetch(SB + '/rest/v1/batalhao_visitas', { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, H), body: JSON.stringify({ aparelho: id.slice(0, 40), celular: innerWidth < 768 }), keepalive: true }).catch(function () { });
+  }
+  setTimeout(registrar, 1500);
+  /* no modo edição: marca este aparelho como administrador e mostra o painel */
+  var painel;
+  function mostrar() {
+    if (!D.body.classList.contains('edit')) { if (painel) painel.style.display = 'none'; return; }
+    ls('x35adm', '1');
+    var box = D.getElementById('xredes'); if (!box) return;
+    if (!painel) {
+      painel = D.createElement('div'); painel.setAttribute('contenteditable', 'false');
+      painel.style.cssText = 'max-width:620px;margin:0 auto 12px;padding:12px;border:2px solid #0c223a;border-radius:8px;background:#fff;font:13px Montserrat,sans-serif;color:#0c223a;text-align:center';
+      box.insertBefore(painel, box.firstChild);
+    }
+    painel.style.display = ''; painel.textContent = 'Carregando visualizações…';
+    fetch(SB + '/rest/v1/rpc/batalhao_visitas_resumo', { method: 'POST', headers: H, body: '{}' }).then(function (r) { return r.json(); }).then(function (v) {
+      function n(x) { return Number(x || 0).toLocaleString('pt-BR'); }
+      var desde = v.desde ? new Date(v.desde).toLocaleDateString('pt-BR') : 'hoje';
+      painel.innerHTML = '<b style="font-size:15px">📊 Visualizações do site</b>' +
+        '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px">' +
+        [['Total', v.total], ['Hoje', v.hoje], ['Últimos 7 dias', v.semana], ['Pessoas (aparelhos)', v.aparelhos], ['Pelo celular', v.celular]].map(function (c) {
+          return '<div style="min-width:96px;padding:8px;border-radius:6px;background:#f4f6f8"><div style="font-size:20px;font-weight:800">' + n(c[1]) + '</div><div style="font-size:11px;color:#555">' + c[0] + '</div></div>';
+        }).join('') + '</div><div style="margin-top:6px;font-size:11px;color:#777">Contando desde ' + desde + '. Cada visita conta 1 vez; as suas como administrador não entram.</div>';
+    }).catch(function () { painel.textContent = 'Não foi possível carregar as visualizações.'; });
+  }
+  new MutationObserver(mostrar).observe(D.body, { attributes: true, attributeFilter: ['class'] });
+})();
